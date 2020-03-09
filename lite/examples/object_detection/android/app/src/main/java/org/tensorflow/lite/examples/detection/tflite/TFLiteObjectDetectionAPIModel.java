@@ -20,6 +20,8 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.os.Trace;
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +32,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +48,7 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   private static final Logger LOGGER = new Logger();
 
   // Only return this many results.
-  private static final int NUM_DETECTIONS = 10;
+  private static final int NUM_DETECTIONS = 29;
   // Float model
   private static final float IMAGE_MEAN = 128.0f;
   private static final float IMAGE_STD = 128.0f;
@@ -129,7 +132,7 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     // Pre-allocate buffers.
     int numBytesPerChannel;
     if (isQuantized) {
-      numBytesPerChannel = 1; // Quantized
+      numBytesPerChannel = 4; // Quantized
     } else {
       numBytesPerChannel = 4; // Floating point
     }
@@ -159,16 +162,16 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     for (int i = 0; i < inputSize; ++i) {
       for (int j = 0; j < inputSize; ++j) {
         int pixelValue = intValues[i * inputSize + j];
-        if (isModelQuantized) {
+        /*if (isModelQuantized) {
           // Quantized model
           imgData.put((byte) ((pixelValue >> 16) & 0xFF));
           imgData.put((byte) ((pixelValue >> 8) & 0xFF));
           imgData.put((byte) (pixelValue & 0xFF));
-        } else { // Float model
-          imgData.putFloat((((pixelValue >> 16) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
-          imgData.putFloat((((pixelValue >> 8) & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
-          imgData.putFloat(((pixelValue & 0xFF) - IMAGE_MEAN) / IMAGE_STD);
-        }
+        } else { // Float model*/
+          imgData.putFloat((((pixelValue >> 16) & 0xFF)));
+          imgData.putFloat((((pixelValue >> 8) & 0xFF)));
+          imgData.putFloat(((pixelValue & 0xFF)));
+        //}
       }
     }
     Trace.endSection(); // preprocessBitmap
@@ -190,8 +193,20 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
 
     // Run the inference call.
     Trace.beginSection("run");
-    tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
+    //tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
+    tfLite.run(imgData, outputScores);
     Trace.endSection();
+
+    //System.out.println(Arrays.toString(outputScores[0]));
+    int max_index = 0;
+    float max_value = -1;
+    for(int i=0; i < NUM_DETECTIONS; i++){
+      if(outputScores[0][i] > max_value) {
+        max_value = outputScores[0][i];
+        max_index = i;
+      }
+    }
+    System.out.println("Prediction: " + labels.get(max_index));
 
     // Show the best detections.
     // after scaling them back to the input size.
