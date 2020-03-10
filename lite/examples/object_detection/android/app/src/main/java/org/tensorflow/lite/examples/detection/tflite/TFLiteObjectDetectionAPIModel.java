@@ -252,4 +252,11 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   public void setUseNNAPI(boolean isChecked) {
     if (tfLite != null) tfLite.setUseNNAPI(isChecked);
   }
+
+  public interface onLabelReceive{
+    void sendLabel(String label);
+  }
 }
+
+
+
