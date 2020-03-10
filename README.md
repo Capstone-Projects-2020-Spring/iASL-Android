@@ -1,36 +1,22 @@
-# TensorFlow Examples
+# iASL-Android
 
-<div align="center">
-  <img src="https://www.tensorflow.org/images/tf_logo_social.png" /><br /><br />
-</div>
+## Overview
+This repository is for the iASL Android application. The app will use the Android device's front-facing camera to record the user performing ASL. It will then attempt to convert the ASL to text by using machine learning. The application will also support a speech-to-text feature.
 
-<h2>Most important links!</h2>
+Users will be able to save the resulting text as a note. This application will also contain a messaging feature so that users can perform ASL in front of the camera, or speak into the microphone, and have the resulting text be sent to someone else.
 
-* [Community examples](./community)
-* [Course materials](./courses/udacity_deep_learning) for the [Deep Learning](https://www.udacity.com/course/deep-learning--ud730) class on Udacity
+The repository containing the machine learning backend for converting ASL to text can be found at: https://github.com/Capstone-Projects-2020-Spring/iASL-Backend
 
-If you are looking to learn TensorFlow, don't miss the
-[core TensorFlow documentation](http://github.com/tensorflow/docs)
-which is largely runnable code.
-Those notebooks can be opened in Colab from
-[tensorflow.org](https://tensorflow.org).
+## Requirements
+* Android device (or emulator) running Android 9.0 Pie (API Level 28) or later
+* Front-facing camera (for ASL-to-text functionality)
+* Microphone (for speech-to-text functionality)
 
-<h2>What is this repo?</h2>
+Note: Not all features may work successfully if the application is running on an emulator instead of an actual device.
 
-This is the TensorFlow example repo.  It has several classes of material:
+## Build
+To clone this project, you may enter the following command into Bash: `git clone https://github.com/Capstone-Projects-2020-Spring/iASL-Android.git`
 
-* Showcase examples and documentation for our fantastic [TensorFlow Community](https://tensorflow.org/community)
-* Provide examples mentioned on TensorFlow.org
-* Publish material supporting official TensorFlow courses
-* Publish supporting material for the [TensorFlow Blog](https://blog.tensorflow.org) and [TensorFlow YouTube Channel](https://youtube.com/tensorflow)
+After cloning the repository, you can open the project in Android Studio.
 
-We welcome community contributions, see [CONTRIBUTING.md](CONTRIBUTING.md) and, for style help,
-[Writing TensorFlow documentation](https://www.tensorflow.org/community/documentation)
-guide.
-
-To file an issue, use the tracker in the
-[tensorflow/tensorflow](https://github.com/tensorflow/tensorflow/issues/new?template=20-documentation-issue.md) repo.
-
-## License
-
-[Apache License 2.0](LICENSE)
+Alternatively, you may open Android Studio and navigate to File > New > Project from Version Control, and then enter the URL of this repository (`https://github.com/Capstone-Projects-2020-Spring/iASL-Android.git`) and choose a directory in which to save the project.
