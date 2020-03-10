@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!DOCTYPE LinearLayout [<!ELEMENT LinearLayout (LinearLayout|ImageView|TextView|View|RelativeLayout|androidx.appcompat.widget.SwitchCompat)*><!ATTLIST LinearLayoutandroid:background CDATA #IMPLIEDandroid:gravity CDATA #IMPLIEDandroid:id CDATA #IMPLIEDandroid:layout_alignParentRight CDATA #IMPLIEDandroid:layout_gravity CDATA #IMPLIEDandroid:layout_height CDATA #REQUIREDandroid:layout_width CDATA #REQUIREDandroid:orientation CDATA #REQUIREDandroid:padding CDATA #IMPLIEDandroid:paddingBottom CDATA #IMPLIEDandroid:paddingTop CDATA #IMPLIEDandroid:visibility CDATA #IMPLIEDapp:behavior_hideable CDATA #IMPLIEDapp:layout_behavior CDATA #IMPLIEDxmlns:android CDATA #IMPLIEDxmlns:app CDATA #IMPLIED><!ELEMENT ImageView (#PCDATA)><!ATTLIST ImageViewandroid:id CDATA #REQUIREDandroid:layout_gravity CDATA #IMPLIEDandroid:layout_height CDATA #REQUIREDandroid:layout_width CDATA #REQUIREDandroid:src CDATA #REQUIRED><!ELEMENT TextView (#PCDATA)><!ATTLIST TextViewandroid:gravity CDATA #IMPLIEDandroid:id CDATA #IMPLIEDandroid:layout_height CDATA #REQUIREDandroid:layout_marginLeft CDATA #IMPLIEDandroid:layout_marginRight CDATA #IMPLIEDandroid:layout_marginTop CDATA #IMPLIEDandroid:layout_width CDATA #REQUIREDandroid:text CDATA #REQUIREDandroid:textColor CDATA #REQUIREDandroid:textSize CDATA #IMPLIED><!ELEMENT View (#PCDATA)><!ATTLIST Viewandroid:background CDATA #REQUIREDandroid:layout_height CDATA #REQUIREDandroid:layout_marginTop CDATA #REQUIREDandroid:layout_width CDATA #REQUIRED><!ELEMENT RelativeLayout (TextView|LinearLayout)*><!ATTLIST RelativeLayoutandroid:layout_width CDATA #REQUIREDandroid:layout_height CDATA #REQUIREDandroid:layout_marginTop CDATA #REQUIREDandroid:orientation CDATA #REQUIRED><!ELEMENT androidx.appcompat.widget.SwitchCompat (#PCDATA)><!ATTLIST androidx.appcompat.widget.SwitchCompatandroid:id CDATA #REQUIREDandroid:layout_width CDATA #REQUIREDandroid:layout_height CDATA #REQUIREDandroid:layout_marginTop CDATA #REQUIREDandroid:checked CDATA #REQUIREDandroid:gravity CDATA #REQUIREDandroid:text CDATA #REQUIREDandroid:textColor CDATA #REQUIRED>]>
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_sheet_layout"
@@ -35,11 +35,11 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/label"
+            android:id="@+id/frame"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Label"
+            android:text="Frame"
             android:textColor="@android:color/black" />
 
         <TextView
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="right"
-            android:text="Nothing"
+            android:text="640*480"
             android:textColor="@android:color/black" />
     </LinearLayout>
 
