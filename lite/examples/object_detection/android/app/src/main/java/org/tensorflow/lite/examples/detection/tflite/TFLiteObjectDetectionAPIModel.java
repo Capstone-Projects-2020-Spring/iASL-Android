@@ -211,25 +211,26 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     // Show the best detections.
     // after scaling them back to the input size.
     final ArrayList<Recognition> recognitions = new ArrayList<>(NUM_DETECTIONS);
-    for (int i = 0; i < NUM_DETECTIONS; ++i) {
+//    for (int i = 0; i < NUM_DETECTIONS; ++i) {
       final RectF detection =
           new RectF(
-              outputLocations[0][i][1] * inputSize,
-              outputLocations[0][i][0] * inputSize,
-              outputLocations[0][i][3] * inputSize,
-              outputLocations[0][i][2] * inputSize);
-      // SSD Mobilenet V1 Model assumes class 0 is background class
-      // in label file and class labels start from 1 to number_of_classes+1,
-      // while outputClasses correspond to class index from 0 to number_of_classes
-      int labelOffset = 1;
-      recognitions.add(
-          new Recognition(
-              "" + i,
-              labels.get((int) outputClasses[0][i] + labelOffset),
-              outputScores[0][i],
-              detection));
-    }
-    Trace.endSection(); // "recognizeImage"
+              outputLocations[0][max_index][1] * inputSize,
+              outputLocations[0][max_index][0] * inputSize,
+              outputLocations[0][max_index][3] * inputSize,
+              outputLocations[0][max_index][2] * inputSize);
+//      // SSD Mobilenet V1 Model assumes class 0 is background class
+//      // in label file and class labels start from 1 to number_of_classes+1,
+//      // while outputClasses correspond to class index from 0 to number_of_classes
+//      int labelOffset = 1;
+//      recognitions.add(
+//          new Recognition(
+//              "" + i,
+//              labels.get((int) outputClasses[0][i] + labelOffset),
+//              outputScores[0][i],
+//              detection));
+      recognitions.add(new Recognition("" + max_index, labels.get(max_index), outputScores[0][max_index], detection));
+//    Trace.endSection(); // "recognizeImage"
+
     return recognitions;
   }
 
