@@ -1,6 +1,6 @@
 
 task downloadZipFile(type: Download) {
-    src 'http://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip'
+    src 'https://github.com/Capstone-Projects-2020-Spring/iASL-Backend/raw/master/output/p1_train/model.tflite.zip'
     dest new File(buildDir, 'zips/')
     overwrite false
 }

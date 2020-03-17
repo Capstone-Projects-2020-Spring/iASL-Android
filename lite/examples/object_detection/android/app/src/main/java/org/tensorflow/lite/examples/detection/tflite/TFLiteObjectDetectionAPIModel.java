@@ -229,7 +229,7 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
 //              outputScores[0][i],
 //              detection));
       recognitions.add(new Recognition("" + max_index, labels.get(max_index), outputScores[0][max_index], detection));
-//    Trace.endSection(); // "recognizeImage"
+      Trace.endSection(); // "recognizeImage"
 
     return recognitions;
   }
