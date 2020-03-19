@@ -30,6 +30,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.View;
 import android.widget.Toast;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -222,7 +223,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                   @Override
                   public void run() {
                     showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                    showInference(lastProcessingTimeMs + "ms");
                   }
                 });
           }
@@ -237,6 +237,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   @Override
   protected Size getDesiredPreviewFrameSize() {
     return DESIRED_PREVIEW_SIZE;
+  }
+
+  @Override
+  public void onClick(View view) {
+
   }
 
   // Which detection model to use: by default uses Tensorflow Object Detection API frozen

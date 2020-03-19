@@ -15,23 +15,19 @@
 -->
 
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#00000000">
 
     <RelativeLayout
+        android:id="@+id/relativeLayout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/black"
         android:orientation="vertical">
 
-
-        <FrameLayout
-            android:id="@+id/container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:context="org.tensorflow.demo.CameraActivity" />
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -40,15 +36,33 @@
             android:layout_alignParentTop="true"
             android:background="@color/tfe_semi_transparent">
 
-            <ImageView
+            <Button
+                android:id="@+id/noteButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/tfl2_logo" />
+                android:text="Take Note" />
+
+            <Button
+                android:id="@+id/msgButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Message" />
         </androidx.appcompat.widget.Toolbar>
+
 
     </RelativeLayout>
 
     <include
         android:id="@+id/bottom_sheet_layout"
         layout="@layout/tfe_od_layout_bottom_sheet" />
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="280dp"
+        android:layout_height="320dp"
+        android:layout_marginEnd="65dp"
+        android:layout_marginBottom="226dp"
+        app:layout_anchor="@+id/relativeLayout2"
+        app:layout_anchorGravity="center"
+        tools:context="org.tensorflow.demo.CameraActivity" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
