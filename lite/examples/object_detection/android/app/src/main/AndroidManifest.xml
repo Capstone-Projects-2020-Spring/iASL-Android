@@ -16,7 +16,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.ObjectDetection">
-        <activity android:name=".MessagingActivity"></activity>
+        <activity android:name=".StartActivity"></activity>
+        <activity android:name=".LoginActivity"
+            android:parentActivityName=".StartActivity"/>
+        <activity android:name=".MessagingActivity" />
+        <activity android:name=".RegisterActivity"
+            android:parentActivityName=".StartActivity"/>
         <activity android:name=".NoteTakingActivity" />
         <activity
             android:name=".DetectorActivity"

@@ -39,6 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:fontFamily="monospace"
             android:text="Prediction"
             android:textColor="@android:color/black" />
 
@@ -47,6 +48,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:fontFamily="monospace"
             android:gravity="right"
             android:text="640*480"
             android:textColor="@android:color/black" />
@@ -62,6 +64,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:fontFamily="monospace"
             android:text="Crop"
             android:textColor="@android:color/black" />
 
@@ -70,6 +73,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:fontFamily="monospace"
             android:gravity="right"
             android:text="640*480"
             android:textColor="@android:color/black" />

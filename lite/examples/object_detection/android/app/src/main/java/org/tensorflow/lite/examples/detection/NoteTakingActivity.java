@@ -11,12 +11,15 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.TestLooperManager;
+import android.speech.tts.TextToSpeech;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +34,7 @@ import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 public class NoteTakingActivity extends CameraActivity implements ImageReader.OnImageAvailableListener {
 
@@ -68,9 +72,11 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private MultiBoxTracker tracker;
 
     private BorderedText borderedText;
-    private TextView textView;
+    private EditText textView;
 
     private String currentNote = "";
+
+    private TextToSpeech textToSpeech;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -78,6 +84,27 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         setContentView(R.layout.note_taking_activity);
 
         textView = findViewById(R.id.textView);
+
+        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(Locale.UK);
+                }
+            }
+        });
+
+        findViewById(R.id.tts).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String toSpeak = textView.getText().toString();
+                Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+            }
+        });
+
+        Button backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(view -> finish());
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setFragment();
@@ -209,7 +236,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
                             }
-                            showPrediction(result.getTitle());
+                            //showPrediction(result.getTitle());
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
@@ -260,7 +287,15 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     protected void showPrediction(String pred){
-        textView.setText(pred);
+        textView.append(pred);
     }
 
+    @Override
+    public synchronized void onPause() {
+        if(textToSpeech !=null){
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+        super.onPause();
+    }
 }

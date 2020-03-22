@@ -122,7 +122,7 @@ public abstract class CameraActivity extends AppCompatActivity
     msgButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        startActivity(new Intent(view.getContext(), MessagingActivity.class));
+        startActivity(new Intent(view.getContext(), StartActivity.class));
       }
     });
 
