@@ -1,6 +1,7 @@
 package org.tensorflow.lite.examples.detection.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.tensorflow.lite.examples.detection.ChatWindow;
 import org.tensorflow.lite.examples.detection.R;
 import org.tensorflow.lite.examples.detection.model.User;
 
@@ -32,12 +34,22 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        User user = mUsers.get(position);
+        holder.username.setText(user.getUsername());
 
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(mContext, ChatWindow.class);
+                intent.putExtra("userid", user.getId());
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return 0;
+        return mUsers.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{
