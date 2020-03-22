@@ -54,4 +54,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:17.2.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.rengwuxian.materialedittext:library:2.1.4'
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
 }
