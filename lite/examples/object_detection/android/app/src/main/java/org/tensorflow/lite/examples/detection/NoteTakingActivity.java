@@ -236,7 +236,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
                             }
-                            //showPrediction(result.getTitle());
+                            showPrediction(result.getTitle());
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
