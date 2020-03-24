@@ -20,3 +20,7 @@ To clone this project, you may enter the following command into Bash: `git clone
 After cloning the repository, you can open the project in Android Studio.
 
 Alternatively, you may open Android Studio and navigate to File > New > Project from Version Control, and then enter the URL of this repository (`https://github.com/Capstone-Projects-2020-Spring/iASL-Android.git`) and choose a directory in which to save the project.
+
+## Code Documentation
+Code documentation can be found here: https://capstone-projects-2020-spring.github.io/iASL-Android/
+Code documentation is generated using JavaDocs.
