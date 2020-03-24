@@ -1,6 +1,6 @@
 
 task downloadZipFile(type: Download) {
-    src 'https://github.com/Capstone-Projects-2020-Spring/iASL-Backend/raw/master/output/p1_train/model.tflite.zip'
+    src 'https://ianapplebaum.com/capstone/model.tflite.zip'
     dest new File(buildDir, 'zips/')
     overwrite false
 }
