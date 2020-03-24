@@ -1,0 +1,15 @@
+{
+    "name": "iASL Android",
+    "package": "iASLandroid",
+    "index": "index.html",
+    "selectors": {
+        "dt a": "Command",
+        "title": "Package"
+    },
+    "ignore": [
+        "ABOUT"
+    ],
+    "icon32x32": "",
+    "allowJS": false,
+    "ExternalURL": ""
+}
