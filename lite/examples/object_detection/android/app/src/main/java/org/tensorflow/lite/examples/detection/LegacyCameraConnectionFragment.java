@@ -149,7 +149,9 @@ public class LegacyCameraConnectionFragment extends Fragment {
     // the SurfaceTextureListener).
 
     if (textureView.isAvailable()) {
-      camera.startPreview();
+      if (null != camera) {
+        camera.startPreview();
+      }
     } else {
       textureView.setSurfaceTextureListener(surfaceTextureListener);
     }
@@ -192,7 +194,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
     CameraInfo ci = new CameraInfo();
     for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
       Camera.getCameraInfo(i, ci);
-      if (ci.facing == CameraInfo.CAMERA_FACING_BACK) return i;
+      if (ci.facing == CameraInfo.CAMERA_FACING_FRONT) return i;
     }
     return -1; // No camera found
   }

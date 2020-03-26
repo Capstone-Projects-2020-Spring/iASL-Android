@@ -63,6 +63,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     private static final int PERMISSIONS_REQUEST = 1;
 
+    Boolean use_auto_prediction = true;
+    EditText txt_message;
+
     FirebaseUser firebaseUser;
     DatabaseReference reference;
 
@@ -76,6 +79,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     RecyclerView recyclerView;
 
     Intent intent;
+    Classifier.Recognition label;
 
 
     private static final Logger LOGGER = new Logger();
@@ -129,6 +133,8 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             }
         });
 
+        txt_message = findViewById(R.id.text_send);
+
         btn_camera = findViewById(R.id.btn_camera);
 
         recyclerView = findViewById(R.id.recycler_view);
@@ -161,8 +167,14 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 FrameLayout frameLayout = findViewById(R.id.container);
                 if (frameLayout.getVisibility() == View.INVISIBLE){
                     frameLayout.setVisibility(View.VISIBLE);
+                    ImageButton btn_camera = findViewById(R.id.btn_camera);
+                    btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
+                    use_auto_prediction = true;
                 } else {
                     frameLayout.setVisibility(View.INVISIBLE);
+                    ImageButton btn_camera = findViewById(R.id.btn_camera);
+                    btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
+                    use_auto_prediction = false;
                 }
             }
         });
@@ -345,10 +357,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                                 canvas.drawRect(location, paint);
 
                                 cropToFrameTransform.mapRect(location);
-
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
-                                showFrameInfo(result.getTitle());
+                                label = result;
                             }
                         }
 
@@ -362,6 +373,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                                     @Override
                                     public void run() {
                                         showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
+                                        //Show prediction
+                                        if (use_auto_prediction){
+                                            if (label != null) {
+                                                showPrediction(label.getTitle() + " ");
+                                            }
+                                        }
                                     }
                                 });
                     }
@@ -444,6 +461,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                         .show();
             }
             requestPermissions(new String[] {PERMISSION_CAMERA}, PERMISSIONS_REQUEST);
+        }
+    }
+
+    private void showPrediction(String pred){
+        if (!pred.equals("nothing ")) {
+            text_send.append(pred);
         }
     }
 }

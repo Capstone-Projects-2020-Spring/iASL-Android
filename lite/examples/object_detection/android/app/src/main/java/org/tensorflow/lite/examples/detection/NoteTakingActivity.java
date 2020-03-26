@@ -296,7 +296,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     protected void showPrediction(String pred){
-        textView.setText(pred);
+        textView.append(pred);
     }
 
     @Override
