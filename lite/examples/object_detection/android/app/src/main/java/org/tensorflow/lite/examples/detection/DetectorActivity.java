@@ -213,6 +213,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                 result.setLocation(location);
                 mappedRecognitions.add(result);
+                showFrameInfo(result.getTitle());
               }
             }
 
