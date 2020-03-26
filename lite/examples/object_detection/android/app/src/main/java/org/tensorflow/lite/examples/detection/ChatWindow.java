@@ -14,6 +14,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader;
+import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -158,12 +159,10 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             @Override
             public void onClick(View view) {
                 FrameLayout frameLayout = findViewById(R.id.container);
-                frameLayout.setVisibility(View.VISIBLE);
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                if (hasPermission()) {
-                    setFragment();
+                if (frameLayout.getVisibility() == View.INVISIBLE){
+                    frameLayout.setVisibility(View.VISIBLE);
                 } else {
-                    requestPermission();
+                    frameLayout.setVisibility(View.INVISIBLE);
                 }
             }
         });
@@ -261,7 +260,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-        croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888);
+        int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
+        croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
+        //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
@@ -347,8 +348,8 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
+                                showFrameInfo(result.getTitle());
                             }
-                            //showPrediction(result.getTitle());
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
@@ -370,6 +371,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     @Override
     protected int getLayoutId() {
         return R.layout.tfe_od_camera_connection_fragment_tracking;
+    }
+
+    public int getSquareCropDimensionForBitmap(Bitmap bitmap)
+    {
+        //use the smallest dimension of the image to crop to
+        return Math.min(bitmap.getWidth(), bitmap.getHeight());
     }
 
     @Override

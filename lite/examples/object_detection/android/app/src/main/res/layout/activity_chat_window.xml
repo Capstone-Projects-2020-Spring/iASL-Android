@@ -85,7 +85,6 @@
         android:layout_below="@id/bar_layout"
         android:layout_marginTop="20dp"
         android:layout_alignParentRight="true"
-        android:visibility="invisible"
         tools:context="org.tensorflow.demo.CameraActivity"></FrameLayout>
 
 </RelativeLayout>

@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader;
+import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.TestLooperManager;
@@ -107,7 +108,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         backButton.setOnClickListener(view -> finish());
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setFragment();
+        //setFragment();
     }
 
     @Override
@@ -149,7 +150,9 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-        croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Bitmap.Config.ARGB_8888);
+        int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
+        croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
+        //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
@@ -235,8 +238,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
+                                showFrameInfo(result.getTitle());
                             }
-                            showPrediction(result.getTitle());
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
@@ -258,6 +261,12 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     @Override
     protected int getLayoutId() {
         return R.layout.tfe_od_camera_connection_fragment_tracking;
+    }
+
+    public int getSquareCropDimensionForBitmap(Bitmap bitmap)
+    {
+        //use the smallest dimension of the image to crop to
+        return Math.min(bitmap.getWidth(), bitmap.getHeight());
     }
 
     @Override
@@ -287,7 +296,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     protected void showPrediction(String pred){
-        textView.append(pred);
+        textView.setText(pred);
     }
 
     @Override
