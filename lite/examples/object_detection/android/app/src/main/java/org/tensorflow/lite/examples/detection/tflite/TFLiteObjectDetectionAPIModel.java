@@ -18,6 +18,7 @@ package org.tensorflow.lite.examples.detection.tflite;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.RectF;
 import android.os.Trace;
 import android.util.Log;
@@ -50,8 +51,8 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   // Only return this many results.
   private static final int NUM_DETECTIONS = 29;
   // Float model
-  private static final float IMAGE_MEAN = 128.0f;
-  private static final float IMAGE_STD = 128.0f;
+  private static final float IMAGE_MEAN = 127.5f;
+  private static final float IMAGE_STD = 1.0f;
   // Number of threads in the java app
   private static final int NUM_THREADS = 4;
   private boolean isModelQuantized;
@@ -60,15 +61,10 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   // Pre-allocated buffers.
   private Vector<String> labels = new Vector<String>();
   private int[] intValues;
-  // outputLocations: array of shape [Batchsize, NUM_DETECTIONS,4]
-  // contains the location of detected boxes
-  private float[][][] outputLocations;
-  // outputClasses: array of shape [Batchsize, NUM_DETECTIONS]
-  // contains the classes of detected boxes
-  private float[][] outputClasses;
+
   // outputScores: array of shape [Batchsize, NUM_DETECTIONS]
   // contains the scores of detected boxes
-  private float[][] outputScores;
+  private float[][] output;
   // numDetections: array of shape [Batchsize]
   // contains the number of detected boxes
   private float[] numDetections;
@@ -128,11 +124,11 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
       throw new RuntimeException(e);
     }
 
-    d.isModelQuantized = isQuantized;
+    d.isModelQuantized = false;
     // Pre-allocate buffers.
     int numBytesPerChannel;
     if (isQuantized) {
-      numBytesPerChannel = 4; // Quantized
+      numBytesPerChannel = 1; // Quantized
     } else {
       numBytesPerChannel = 4; // Floating point
     }
@@ -141,9 +137,8 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     d.intValues = new int[d.inputSize * d.inputSize];
 
     d.tfLite.setNumThreads(NUM_THREADS);
-    d.outputLocations = new float[1][NUM_DETECTIONS][4];
-    d.outputClasses = new float[1][NUM_DETECTIONS];
-    d.outputScores = new float[1][NUM_DETECTIONS];
+
+    d.output = new float[1][NUM_DETECTIONS];
     d.numDetections = new float[1];
     return d;
   }
@@ -159,78 +154,48 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
     imgData.rewind();
+    float input[][][][] = new float[1][bitmap.getHeight()][bitmap.getWidth()][3];
+    output = new float[1][NUM_DETECTIONS];
     for (int i = 0; i < inputSize; ++i) {
       for (int j = 0; j < inputSize; ++j) {
         int pixelValue = intValues[i * inputSize + j];
-        /*if (isModelQuantized) {
-          // Quantized model
-          imgData.put((byte) ((pixelValue >> 16) & 0xFF));
-          imgData.put((byte) ((pixelValue >> 8) & 0xFF));
-          imgData.put((byte) (pixelValue & 0xFF));
-        } else { // Float model*/
-          imgData.putFloat((((pixelValue >> 16) & 0xFF)));
-          imgData.putFloat((((pixelValue >> 8) & 0xFF)));
-          imgData.putFloat(((pixelValue & 0xFF)));
-        //}
+        input[0][i][j][0] = (((float) ((pixelValue & 0xff0000) >> 16)) / IMAGE_MEAN) - IMAGE_STD;
+        input[0][i][j][1] = (((float) ((pixelValue & 0x00ff00) >> 8)) / IMAGE_MEAN) - IMAGE_STD;
+        input[0][i][j][2] = (((float) ((pixelValue & 0x0000ff) >> 0)) / IMAGE_MEAN) - IMAGE_STD;
       }
     }
     Trace.endSection(); // preprocessBitmap
 
-    // Copy the input data into TensorFlow.
-    Trace.beginSection("feed");
-    outputLocations = new float[1][NUM_DETECTIONS][4];
-    outputClasses = new float[1][NUM_DETECTIONS];
-    outputScores = new float[1][NUM_DETECTIONS];
-    numDetections = new float[1];
-
-    Object[] inputArray = {imgData};
-    Map<Integer, Object> outputMap = new HashMap<>();
-    outputMap.put(0, outputLocations);
-    outputMap.put(1, outputClasses);
-    outputMap.put(2, outputScores);
-    outputMap.put(3, numDetections);
-    Trace.endSection();
-
     // Run the inference call.
     Trace.beginSection("run");
     //tfLite.runForMultipleInputsOutputs(inputArray, outputMap);
-    tfLite.run(imgData, outputScores);
+    tfLite.run(input, output);
     Trace.endSection();
 
     //System.out.println(Arrays.toString(outputScores[0]));
     int max_index = 0;
     float max_value = -1;
     for(int i=0; i < NUM_DETECTIONS; i++){
-      if(outputScores[0][i] > max_value) {
-        max_value = outputScores[0][i];
+      if(output[0][i] > max_value) {
+        max_value = output[0][i];
         max_index = i;
       }
     }
-    System.out.println("Prediction: " + labels.get(max_index));
+    System.out.println(String.format("%s: %f", labels.get(max_index), max_value));
 
     // Show the best detections.
     // after scaling them back to the input size.
     final ArrayList<Recognition> recognitions = new ArrayList<>(NUM_DETECTIONS);
-//    for (int i = 0; i < NUM_DETECTIONS; ++i) {
-      final RectF detection =
-          new RectF(
-              outputLocations[0][max_index][1] * inputSize,
-              outputLocations[0][max_index][0] * inputSize,
-              outputLocations[0][max_index][3] * inputSize,
-              outputLocations[0][max_index][2] * inputSize);
-//      // SSD Mobilenet V1 Model assumes class 0 is background class
-//      // in label file and class labels start from 1 to number_of_classes+1,
-//      // while outputClasses correspond to class index from 0 to number_of_classes
-//      int labelOffset = 1;
-//      recognitions.add(
-//          new Recognition(
-//              "" + i,
-//              labels.get((int) outputClasses[0][i] + labelOffset),
-//              outputScores[0][i],
-//              detection));
-      recognitions.add(new Recognition("" + max_index, labels.get(max_index), outputScores[0][max_index], detection));
-      Trace.endSection(); // "recognizeImage"
-
+    for (int i = 0; i < NUM_DETECTIONS; ++i) {
+      int labelOffset = 0;
+      recognitions.add(
+          new Recognition(
+              "" + i,
+              labels.get(max_index + labelOffset),
+              output[0][i],
+              null));
+    }
+    Trace.endSection(); // "recognizeImage"
     return recognitions;
   }
 
