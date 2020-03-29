@@ -223,6 +223,3 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     void sendLabel(String label);
   }
 }
-
-
-

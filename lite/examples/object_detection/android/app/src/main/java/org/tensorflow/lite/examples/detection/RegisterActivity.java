@@ -69,11 +69,12 @@ public class RegisterActivity extends AppCompatActivity {
                             FirebaseUser firebaseUser = mAuth.getCurrentUser();
                             String userId = firebaseUser.getUid();
 
-                            reference = FirebaseDatabase.getInstance().getReference("Users").child(userId);
+                            reference = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
                             HashMap<String, String> hashMap = new HashMap<>();
                             hashMap.put("id", userId);
-                            hashMap.put("username", username);
+                            hashMap.put("email", email);
+                            hashMap.put("name", username);
 
                             reference.setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
