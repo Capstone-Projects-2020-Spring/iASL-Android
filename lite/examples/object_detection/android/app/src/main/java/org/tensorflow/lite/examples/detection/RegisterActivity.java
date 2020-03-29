@@ -15,6 +15,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.rengwuxian.materialedittext.MaterialEditText;
@@ -63,33 +66,40 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void register(String username, String email, String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                            String userId = firebaseUser.getUid();
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        String userId = firebaseUser.getUid();
 
-                            reference = FirebaseDatabase.getInstance().getReference("users").child(userId);
+                        reference = FirebaseDatabase.getInstance().getReference("users").child(userId);
 
-                            HashMap<String, String> hashMap = new HashMap<>();
-                            hashMap.put("id", userId);
-                            hashMap.put("email", email);
-                            hashMap.put("name", username);
+                        HashMap<String, String> hashMap = new HashMap<>();
+                        hashMap.put("id", userId);
+                        hashMap.put("email", email);
+                        hashMap.put("name", username);
 
-                            reference.setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    if (task.isSuccessful()) {
-                                        Intent intent = new Intent(RegisterActivity.this, MessagingActivity.class);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        startActivity(intent);
-                                        finish();
-                                    }
+                        reference.setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Intent intent = new Intent(RegisterActivity.this, MessagingActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+                                    finish();
                                 }
-                            });
-                        } else {
-                            Toast.makeText(RegisterActivity.this, "You can't register with this email or password", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(RegisterActivity.this, "You can't register with this email or password", Toast.LENGTH_SHORT).show();
+                        try { throw task.getException();
+                        } catch(FirebaseAuthWeakPasswordException e) {
+                            Log.d("Here", e.getMessage());
+                        } catch(FirebaseAuthInvalidCredentialsException e) {
+                            Log.d("Here", e.getMessage());
+                        } catch(FirebaseAuthUserCollisionException e) {
+                            Log.d("Here", e.getMessage());
+                        } catch(Exception e) {
+                            Log.d("Here", e.getMessage());
                         }
                     }
                 });
