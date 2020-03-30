@@ -85,6 +85,7 @@ public class ImageUtils {
     }
   }
 
+  //Converts from one type to another
   public static void convertYUV420SPToARGB8888(byte[] input, int width, int height, int[] output) {
     final int frameSize = width * height;
     for (int j = 0, yp = 0; j < height; j++) {
@@ -128,6 +129,7 @@ public class ImageUtils {
     return 0xff000000 | ((r << 6) & 0xff0000) | ((g >> 2) & 0xff00) | ((b >> 10) & 0xff);
   }
 
+  //Converts from one type to another
   public static void convertYUV420ToARGB8888(
       byte[] yData,
       byte[] uData,
