@@ -19,6 +19,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.os.Trace;
 import android.util.Log;
@@ -54,7 +55,7 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
   private static final float IMAGE_MEAN = 127.5f;
   private static final float IMAGE_STD = 1.0f;
   // Number of threads in the java app
-  private static final int NUM_THREADS = 1;
+  private static final int NUM_THREADS = 4;
   private boolean isModelQuantized;
   // Config values.
   private int inputSize;
@@ -151,10 +152,21 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     Trace.beginSection("preprocessBitmap");
     // Preprocess the image data from 0-255 int to normalized float based
     // on the provided parameters.
-    bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+
+    Bitmap rotatedBitmap;
+    float degrees = 180;//rotation degree
+    Matrix matrix = new Matrix();
+    matrix.setRotate(degrees);
+    matrix.preScale(-1.0f, 1.0f);
+
+    rotatedBitmap = bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+    rotatedBitmap.getPixels(intValues, 0, rotatedBitmap.getWidth(), 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight());
 
     imgData.rewind();
-    float input[][][][] = new float[1][bitmap.getHeight()][bitmap.getWidth()][3];
+
+    float input[][][][] = new float[1][rotatedBitmap.getHeight()][rotatedBitmap.getWidth()][3];
     output = new float[1][NUM_DETECTIONS];
     for (int i = 0; i < inputSize; ++i) {
       for (int j = 0; j < inputSize; ++j) {

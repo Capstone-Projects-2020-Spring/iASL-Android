@@ -238,7 +238,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
-                                showFrameInfo(result.getTitle());
+                                //showFrameInfo(result.getTitle());
+                                showPrediction(result.getTitle());
                             }
                         }
 
@@ -296,7 +297,9 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     protected void showPrediction(String pred){
-        textView.append(pred);
+
+        if (!pred.equals("nothing") && !pred.equals("del") && !pred.equals("space"))
+            textView.append(pred);
     }
 
     @Override

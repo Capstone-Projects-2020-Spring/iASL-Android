@@ -10,11 +10,6 @@ import android.view.ViewGroup;
 
 import org.tensorflow.lite.examples.detection.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ChatFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class ChatFragment extends Fragment {
 
     @Override

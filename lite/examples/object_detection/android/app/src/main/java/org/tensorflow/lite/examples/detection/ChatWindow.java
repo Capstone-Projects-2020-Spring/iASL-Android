@@ -17,8 +17,10 @@ import android.media.ImageReader;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
@@ -33,6 +35,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -181,13 +186,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
 
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        reference = FirebaseDatabase.getInstance().getReference("Users").child(userid);
+        reference = FirebaseDatabase.getInstance().getReference("users").child(userid);
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
-                username.setText(user.getUsername());
-
+                username.setText(user.getName());
                 readMessage(firebaseUser.getUid(), userid);
             }
 
@@ -201,28 +205,52 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private void sendMessage(String sender, String receiver, String message){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         HashMap<String, Object> hashmap = new HashMap<>();
-        hashmap.put("sender",sender);
-        hashmap.put("receiver",receiver);
-        hashmap.put("message", message);
-
-        reference.child("Chats").push().setValue(hashmap);
+        hashmap.put("senderId",sender);
+        hashmap.put("receiverId",receiver);
+        hashmap.put("text", message);
+        hashmap.put("timestamp", System.currentTimeMillis());
+        reference = reference.child("messages");
+        String message_id = reference.push().getKey();
+        reference.child(message_id).setValue(hashmap).addOnCompleteListener(task -> {
+            HashMap<String, Integer> hashMap = new HashMap<>();
+            hashMap.put(message_id, 1);
+            DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-messages");
+            reference1.child(firebaseUser.getUid()).setValue(hashMap);
+        });
     }
 
     private void readMessage(final String myid, final String userid){
         mChats = new ArrayList<>();
-        reference = FirebaseDatabase.getInstance().getReference("Chats");
-        reference.addValueEventListener(new ValueEventListener() {
+        FirebaseDatabase.getInstance().getReference("user-messages").child(firebaseUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mChats.clear();
+                DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()){
-                    Chat chat = snapshot.getValue(Chat.class);
-                    if (chat.getReceiver().equals(myid) && chat.getSender().equals(userid) ||
-                    chat.getReceiver().equals(userid) && chat.getSender().equals(myid)){
-                        mChats.add(chat);
-                    }
-                    messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
-                    recyclerView.setAdapter(messageAdapter);
+                    DatabaseReference message = messagesRef.child(snapshot.getKey());
+                    Log.d("herehere", snapshot.getKey());
+                    message.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            Log.d("test",String.valueOf(dataSnapshot.getChildrenCount()));
+                            Chat chat = dataSnapshot.getValue(Chat.class);
+                            if (chat == null){
+                                Log.d("herehere","chat is null");
+                            } else {
+                                Log.d("herehere",chat.getText());
+                            }
+
+                            if (chat.getReceiverId().equals(myid) && chat.getSenderId().equals(userid) ||
+                                    chat.getReceiverId().equals(userid) && chat.getSenderId().equals(myid)){
+                                mChats.add(chat);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
                 }
             }
 
@@ -231,6 +259,8 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
             }
         });
+        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
+        recyclerView.setAdapter(messageAdapter);
     }
 
     @Override

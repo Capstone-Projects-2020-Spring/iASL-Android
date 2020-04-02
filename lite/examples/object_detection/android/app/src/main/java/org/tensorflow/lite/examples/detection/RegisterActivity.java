@@ -91,16 +91,6 @@ public class RegisterActivity extends AppCompatActivity {
                         });
                     } else {
                         Toast.makeText(RegisterActivity.this, "You can't register with this email or password", Toast.LENGTH_SHORT).show();
-                        try { throw task.getException();
-                        } catch(FirebaseAuthWeakPasswordException e) {
-                            Log.d("Here", e.getMessage());
-                        } catch(FirebaseAuthInvalidCredentialsException e) {
-                            Log.d("Here", e.getMessage());
-                        } catch(FirebaseAuthUserCollisionException e) {
-                            Log.d("Here", e.getMessage());
-                        } catch(Exception e) {
-                            Log.d("Here", e.getMessage());
-                        }
                     }
                 });
 
