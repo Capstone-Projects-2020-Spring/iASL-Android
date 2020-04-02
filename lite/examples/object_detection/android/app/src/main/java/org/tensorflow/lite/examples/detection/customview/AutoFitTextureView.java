@@ -54,7 +54,7 @@ public class AutoFitTextureView extends TextureView {
     requestLayout();
   }
 
-  //Set the measured dimensioned based on width, height, ratioWidth, and ratioHeight
+  ///Set the measured dimensioned based on width, height, ratioWidth, and ratioHeight
   @Override
   protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
