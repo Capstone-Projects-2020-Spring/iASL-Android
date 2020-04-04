@@ -93,6 +93,7 @@ public class DetectorTest {
     final List<Recognition> expected = loadRecognitions("table_results.txt");
 
 
+    ///Go through each value in the file "table_results.txt."
     for (Recognition target : expected) {
       // Find a matching result in results
       boolean matched = false;
