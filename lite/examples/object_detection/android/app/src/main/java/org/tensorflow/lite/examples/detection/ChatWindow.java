@@ -96,7 +96,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final ChatWindow.DetectorMode MODE = ChatWindow.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -105,6 +105,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private Integer sensorOrientation;
 
     private Classifier detector;
+
+    private HashMap<String, Integer> preprocessBuffer = new HashMap<String, Integer>();
+    StringBuilder note = new StringBuilder();
+    int recurCount = 0;
+    int recurCountNonLetter = 0;
+    String lastLetter, lastNonLetter;
 
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
@@ -505,9 +511,46 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         }
     }
 
-    private void showPrediction(String pred){
-        if (!pred.equals("nothing ")) {
-            text_send.append(pred);
+    protected void showPrediction(String pred){
+        if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
+            if (pred.equals(lastLetter)) {
+                recurCount++;
+            } else {
+                lastLetter = pred;
+                recurCount = 0;
+            }
+
+            if (recurCount > 3) {
+                appendText(lastLetter);
+                recurCount = 0;
+            }
+        } else {
+            if (pred.equals(lastNonLetter)){
+                recurCountNonLetter++;
+            } else {
+                lastNonLetter = pred;
+                recurCountNonLetter = 0;
+            }
+
+            if (recurCountNonLetter > 2){
+                appendText(lastNonLetter);
+                recurCountNonLetter = 0;
+            }
         }
+
+    }
+
+    private void appendText(String text){
+        if (note.length() > 0 && text.equals("del")){
+            note.deleteCharAt(note.length()-1);
+        } else if (text.equals("space")){
+            note.append(" ");
+        } else if (text.equals("nothing")){
+            //Do nothing
+        } else {
+            note.append(text);
+        }
+
+        text_send.setText(note.toString());
     }
 }

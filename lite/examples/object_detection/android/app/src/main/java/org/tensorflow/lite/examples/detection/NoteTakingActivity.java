@@ -49,7 +49,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final NoteTakingActivity.DetectorMode MODE = NoteTakingActivity.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.90f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
