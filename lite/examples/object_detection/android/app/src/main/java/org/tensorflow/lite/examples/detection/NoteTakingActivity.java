@@ -33,6 +33,7 @@ import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIMod
 import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -48,7 +49,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final NoteTakingActivity.DetectorMode MODE = NoteTakingActivity.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.90f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -64,6 +65,12 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private Bitmap cropCopyBitmap = null;
 
     private boolean computingDetection = false;
+
+    private HashMap<String, Integer> preprocessBuffer = new HashMap<String, Integer>();
+    StringBuilder note = new StringBuilder();
+    int recurCount = 0;
+    int recurCountNonLetter = 0;
+    String lastLetter, lastNonLetter;
 
     private long timestamp = 0;
 
@@ -108,7 +115,38 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         backButton.setOnClickListener(view -> finish());
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        //setFragment();
+
+        preprocessBuffer.put("A",0);
+        preprocessBuffer.put("B",0);
+        preprocessBuffer.put("C",0);
+        preprocessBuffer.put("D",0);
+        preprocessBuffer.put("E",0);
+        preprocessBuffer.put("F",0);
+        preprocessBuffer.put("G",0);
+        preprocessBuffer.put("H",0);
+        preprocessBuffer.put("I",0);
+        preprocessBuffer.put("J",0);
+        preprocessBuffer.put("K",0);
+        preprocessBuffer.put("L",0);
+        preprocessBuffer.put("M",0);
+        preprocessBuffer.put("N",0);
+        preprocessBuffer.put("O",0);
+        preprocessBuffer.put("P",0);
+        preprocessBuffer.put("Q",0);
+        preprocessBuffer.put("R",0);
+        preprocessBuffer.put("S",0);
+        preprocessBuffer.put("T",0);
+        preprocessBuffer.put("U",0);
+        preprocessBuffer.put("V",0);
+        preprocessBuffer.put("W",0);
+        preprocessBuffer.put("X",0);
+        preprocessBuffer.put("Y",0);
+        preprocessBuffer.put("Z",0);
+        preprocessBuffer.put("del",0);
+        preprocessBuffer.put("nothing",0);
+        preprocessBuffer.put("space",0);
+
+
     }
 
     @Override
@@ -220,25 +258,12 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                         paint.setStrokeWidth(2.0f);
 
                         float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-                        switch (MODE) {
-                            case TF_OD_API:
-                                minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-                                break;
-                        }
-
                         final List<Classifier.Recognition> mappedRecognitions =
                                 new LinkedList<Classifier.Recognition>();
 
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-                                canvas.drawRect(location, paint);
-
-                                cropToFrameTransform.mapRect(location);
-
-                                result.setLocation(location);
-                                mappedRecognitions.add(result);
-                                //showFrameInfo(result.getTitle());
                                 showPrediction(result.getTitle());
                             }
                         }
@@ -297,9 +322,46 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     protected void showPrediction(String pred){
+        if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
+            if (pred.equals(lastLetter)) {
+                recurCount++;
+            } else {
+                lastLetter = pred;
+                recurCount = 0;
+            }
 
-        if (!pred.equals("nothing") && !pred.equals("del") && !pred.equals("space"))
-            textView.append(pred);
+            if (recurCount > 3) {
+                appendText(lastLetter);
+                recurCount = 0;
+            }
+        } else {
+            if (pred.equals(lastNonLetter)){
+                recurCountNonLetter++;
+            } else {
+                lastNonLetter = pred;
+                recurCountNonLetter = 0;
+            }
+
+            if (recurCountNonLetter > 2){
+                appendText(lastNonLetter);
+                recurCountNonLetter = 0;
+            }
+        }
+
+    }
+
+    private void appendText(String text){
+        if (note.length() > 0 && text.equals("del")){
+            note.deleteCharAt(note.length()-1);
+        } else if (text.equals("space")){
+            note.append(" ");
+        } else if (text.equals("nothing")){
+            //Do nothing
+        } else {
+            note.append(text);
+        }
+
+        textView.setText(note.toString());
     }
 
     @Override
