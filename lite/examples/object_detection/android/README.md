@@ -11,11 +11,9 @@ Application can run either on device or emulator.
 ## Build the demo using Android Studio
 
 ### Prerequisites
-
-* If you don't have already, install **[Android Studio](https://developer.android.com/studio/index.html)**, following the instructions on the website.
+* Install **[Android Studio](https://developer.android.com/studio/index.html)** (version 3.2 or later) if you do not already have it, following the instructions on the website.
 
 * You need an Android device and Android development environment with minimum API 21.
-* Android Studio 3.2 or later.
 
 ### Building
 * Open Android Studio, and from the Welcome screen, select Open an existing Android Studio project.
