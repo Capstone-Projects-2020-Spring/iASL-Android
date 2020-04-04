@@ -19,6 +19,7 @@ import org.tensorflow.lite.examples.detection.R;
 import org.tensorflow.lite.examples.detection.model.Chat;
 import org.tensorflow.lite.examples.detection.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {

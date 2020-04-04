@@ -187,7 +187,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         reference = FirebaseDatabase.getInstance().getReference("users").child(userid);
-        reference.addValueEventListener(new ValueEventListener() {
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
@@ -204,45 +204,58 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     private void sendMessage(String sender, String receiver, String message){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        HashMap<String, Object> hashmap = new HashMap<>();
-        hashmap.put("senderId",sender);
-        hashmap.put("receiverId",receiver);
-        hashmap.put("text", message);
-        hashmap.put("timestamp", System.currentTimeMillis());
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("senderId",sender);
+        hashMap.put("receiverId",receiver);
+        hashMap.put("text", message);
+        hashMap.put("timestamp", System.currentTimeMillis());
         reference = reference.child("messages");
         String message_id = reference.push().getKey();
-        reference.child(message_id).setValue(hashmap).addOnCompleteListener(task -> {
-            HashMap<String, Integer> hashMap = new HashMap<>();
-            hashMap.put(message_id, 1);
-            DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-messages");
-            reference1.child(firebaseUser.getUid()).setValue(hashMap);
+        reference.child(message_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put(message_id, 1);
+                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-messages");
+                reference1.child(sender).updateChildren(hashMap);
+                FirebaseDatabase.getInstance().getReference("user-messages").child(receiver).updateChildren(hashMap);
+            }
         });
     }
 
     private void readMessage(final String myid, final String userid){
+        Log.d("test", "readMessage is invoked");
         mChats = new ArrayList<>();
-        FirebaseDatabase.getInstance().getReference("user-messages").child(firebaseUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
+        recyclerView.setAdapter(messageAdapter);
+
+        FirebaseDatabase.getInstance().getReference("user-messages").child(myid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d("test","data changed! event invoked!");
                 mChats.clear();
                 DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()){
                     DatabaseReference message = messagesRef.child(snapshot.getKey());
-                    Log.d("herehere", snapshot.getKey());
                     message.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             Log.d("test",String.valueOf(dataSnapshot.getChildrenCount()));
                             Chat chat = dataSnapshot.getValue(Chat.class);
-                            if (chat == null){
-                                Log.d("herehere","chat is null");
-                            } else {
-                                Log.d("herehere",chat.getText());
-                            }
 
                             if (chat.getReceiverId().equals(myid) && chat.getSenderId().equals(userid) ||
                                     chat.getReceiverId().equals(userid) && chat.getSenderId().equals(myid)){
+                                Log.d("test", "chat added from " +firebaseUser.getUid() + "to " + chat.getReceiverId());
                                 mChats.add(chat);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
+                                        recyclerView.setAdapter(messageAdapter);
+                                        recyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
+                                    }
+                                });
+
                             }
                         }
 
@@ -259,8 +272,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
             }
         });
-        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
-        recyclerView.setAdapter(messageAdapter);
     }
 
     @Override

@@ -28,7 +28,7 @@
         <activity android:name=".NoteTakingActivity" />
         <activity
             android:name=".DetectorActivity"
-            android:label="@string/tfe_od_app_name"
+            android:label="iASL"
             android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
