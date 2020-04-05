@@ -31,6 +31,7 @@ public class RecognitionScoreView extends View implements ResultsView {
   private final Paint bgPaint;
   private List<Recognition> results;
 
+  ///Constructor with two parameters, Context and AttributeSet
   public RecognitionScoreView(final Context context, final AttributeSet set) {
     super(context, set);
 
