@@ -403,10 +403,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 canvas.drawRect(location, paint);
 
-                                cropToFrameTransform.mapRect(location);
-                                result.setLocation(location);
-                                mappedRecognitions.add(result);
-                                label = result;
+                                showPrediction(result.getTitle());
                             }
                         }
 
@@ -414,20 +411,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
-
-                        runOnUiThread(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                                        //Show prediction
-                                        if (use_auto_prediction){
-                                            if (label != null) {
-                                                showPrediction(label.getTitle() + " ");
-                                            }
-                                        }
-                                    }
-                                });
                     }
                 });
     }
@@ -520,7 +503,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 recurCount = 0;
             }
 
-            if (recurCount > 3) {
+            if (recurCount > 2) {
                 appendText(lastLetter);
                 recurCount = 0;
             }
