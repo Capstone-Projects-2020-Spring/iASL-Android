@@ -33,8 +33,15 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Toast;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.customview.OverlayView.DrawCallback;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
@@ -44,6 +51,12 @@ import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
 import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 import android.media.ThumbnailUtils;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 
 /**
@@ -67,6 +80,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final float TEXT_SIZE_DIP = 10;
   OverlayView trackingOverlay;
   private Integer sensorOrientation;
+  private static final float IMAGE_MEAN = 127.5f;
+  private static final float IMAGE_STD = 1.0f;
+  private static int numFrames = 0;
+
+  ByteBuffer video = ByteBuffer.allocate(40 * 150 * 150 * 3);
 
   private Classifier detector;
 
@@ -125,9 +143,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
     rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-    int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
-    croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
-    //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
+    croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
     frameToCropTransform =
         ImageUtils.getTransformationMatrix(
@@ -153,6 +169,23 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
   }
 
+  private void addPixels(Bitmap bitmap) {
+    int[] pixValues = new int[bitmap.getWidth() * bitmap.getHeight()];
+    bitmap.getPixels(pixValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+    for(int i=0; i<bitmap.getHeight(); i++){
+      for(int j=0; j<bitmap.getWidth(); j++) {
+        int pixelValue = pixValues[i * bitmap.getHeight() + j];
+        //video.putFloat((((float) ((pixelValue & 0xff0000) >> 16)) / IMAGE_MEAN) - IMAGE_STD);
+        //video.putFloat((((float) ((pixelValue & 0x00ff00) >> 8)) / IMAGE_MEAN) - IMAGE_STD);
+        //video.putFloat((((float) ((pixelValue & 0x0000ff) >> 0)) / IMAGE_MEAN) - IMAGE_STD);
+        video.put((byte) ((pixelValue >> 16) & 0xFF));
+        video.put((byte) ((pixelValue >> 8) & 0xFF));
+        video.put((byte) (pixelValue & 0xFF));
+      }
+    }
+    numFrames++;
+  }
+
   @Override
   protected void processImage() {
     ++timestamp;
@@ -168,7 +201,49 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     LOGGER.i("Preparing image " + currTimestamp + " for detection in bg thread.");
 
     rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
+    int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
+    croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, dimension, dimension);
+    croppedBitmap = Bitmap.createScaledBitmap(croppedBitmap, TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, false);
+    Log.d("Dimensions: ", String.valueOf(croppedBitmap.getHeight()) + "x" + String.valueOf(croppedBitmap.getWidth()));
+    Bitmap vidBitmap = Bitmap.createScaledBitmap(croppedBitmap, 150, 150, false);
+    System.out.println("Frame number: " + numFrames);
+    if(numFrames == 40) {
+      System.out.println("40 FRAMES");
+      video.rewind();
+      byte[] data = video.array();
+      // min API 26?
+      String out = Base64.getEncoder().encodeToString(data);
+      numFrames = 0;
+      video.rewind();
+      runInBackground(new Runnable() {
+        @Override
+        public void run() {
+          System.out.println("Sending Request");
+          RequestQueue rq = Volley.newRequestQueue(getApplicationContext());
+          String url = "http://192.168.1.39:8080/predict";
+          StringRequest sr = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+              System.out.println("RESPONSE: " + response);
+            }
+          }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+              System.out.println("ERROR " + error.getMessage());
+            }
+          }) {
+            protected Map<String, String> getParams() {
+              Map<String, String> params = new HashMap<>();
+              params.put("vid_stuff", out);
+              return params;
+            }
+          };
+          rq.add(sr);
+        }
+      });
+    }
 
+    addPixels(vidBitmap);
     readyForNextImage();
 
     final Canvas canvas = new Canvas(croppedBitmap);
