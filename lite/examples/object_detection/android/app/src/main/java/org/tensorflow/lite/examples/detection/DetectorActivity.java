@@ -27,8 +27,10 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.View;
 import android.widget.Toast;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -58,9 +60,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
   private static final DetectorMode MODE = DetectorMode.TF_OD_API;
   // Minimum detection confidence to track a detection.
-  private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
+  private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
   private static final boolean MAINTAIN_ASPECT = false;
-  private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
+  private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
   private static final boolean SAVE_PREVIEW_BITMAP = false;
   private static final float TEXT_SIZE_DIP = 10;
   OverlayView trackingOverlay;
@@ -201,32 +203,24 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
             final List<Classifier.Recognition> mappedRecognitions =
                 new LinkedList<Classifier.Recognition>();
-            /*
+
             for (final Classifier.Recognition result : results) {
               final RectF location = result.getLocation();
               if (location != null && result.getConfidence() >= minimumConfidence) {
-                canvas.drawRect(location, paint);
-
-                cropToFrameTransform.mapRect(location);
-
-                result.setLocation(location);
-                mappedRecognitions.add(result);
+                showFrameInfo(result.getTitle());
               }
-            }*/
+            }
 
-            /*
-            tracker.trackResults(mappedRecognitions, currTimestamp);
-            trackingOverlay.postInvalidate();
-*/
+//            tracker.trackResults(mappedRecognitions, currTimestamp);
+//            trackingOverlay.postInvalidate();
+
             computingDetection = false;
 
             runOnUiThread(
                 new Runnable() {
                   @Override
                   public void run() {
-                    showFrameInfo(previewWidth + "x" + previewHeight);
                     showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                    showInference(lastProcessingTimeMs + "ms");
                   }
                 });
           }
@@ -247,6 +241,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   @Override
   protected Size getDesiredPreviewFrameSize() {
     return DESIRED_PREVIEW_SIZE;
+  }
+
+  @Override
+  public void onClick(View view) {
+
   }
 
   // Which detection model to use: by default uses Tensorflow Object Detection API frozen

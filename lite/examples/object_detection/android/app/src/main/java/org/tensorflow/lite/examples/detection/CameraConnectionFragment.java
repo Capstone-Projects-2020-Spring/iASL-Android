@@ -44,6 +44,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -376,7 +377,7 @@ public class CameraConnectionFragment extends Fragment {
   }
 
   /** Closes the current {@link CameraDevice}. */
-  private void closeCamera() {
+  private synchronized void closeCamera() {
     try {
       cameraOpenCloseLock.acquire();
       if (null != captureSession) {
@@ -449,9 +450,10 @@ public class CameraConnectionFragment extends Fragment {
           new CameraCaptureSession.StateCallback() {
 
             @Override
-            public void onConfigured(final CameraCaptureSession cameraCaptureSession) {
+            public synchronized void onConfigured(final CameraCaptureSession cameraCaptureSession) {
               // The camera is already closed
               if (null == cameraDevice) {
+                Log.d("here","cam closed");
                 return;
               }
 

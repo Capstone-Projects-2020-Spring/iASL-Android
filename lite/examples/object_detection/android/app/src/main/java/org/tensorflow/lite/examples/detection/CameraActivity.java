@@ -19,6 +19,7 @@ package org.tensorflow.lite.examples.detection;
 import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
@@ -43,6 +44,7 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -80,7 +82,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private LinearLayout gestureLayout;
   private BottomSheetBehavior<LinearLayout> sheetBehavior;
 
-  protected TextView frameValueTextView, cropValueTextView, inferenceTimeTextView;
+  protected TextView frameValueTextView, cropValueTextView;
   protected ImageView bottomSheetArrowImageView;
   private ImageView plusImageView, minusImageView;
   private SwitchCompat apiSwitchCompat;
@@ -103,14 +105,28 @@ public abstract class CameraActivity extends AppCompatActivity
       requestPermission();
     }
 
-    threadsTextView = findViewById(R.id.threads);
-    plusImageView = findViewById(R.id.plus);
-    minusImageView = findViewById(R.id.minus);
     apiSwitchCompat = findViewById(R.id.api_info_switch);
     bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
     gestureLayout = findViewById(R.id.gesture_layout);
     sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
     bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+    //Set up buttons
+    Button noteButton = findViewById(R.id.noteButton);
+    Button msgButton = findViewById(R.id.msgButton);
+
+    noteButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        startActivity(new Intent(view.getContext(), NoteTakingActivity.class));
+      }
+    });
+
+    msgButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        startActivity(new Intent(view.getContext(), StartActivity.class));
+      }
+    });
 
     ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
     vto.addOnGlobalLayoutListener(
@@ -161,12 +177,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
     frameValueTextView = findViewById(R.id.frame_info);
     cropValueTextView = findViewById(R.id.crop_info);
-    inferenceTimeTextView = findViewById(R.id.inference_info);
 
     apiSwitchCompat.setOnCheckedChangeListener(this);
-
-    plusImageView.setOnClickListener(this);
-    minusImageView.setOnClickListener(this);
   }
 
   protected int[] getRgbBytes() {
@@ -402,7 +414,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
         // We don't use a front facing camera in this sample.
         final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-        if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+        if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
           continue;
         }
 
@@ -502,37 +514,12 @@ public abstract class CameraActivity extends AppCompatActivity
     else apiSwitchCompat.setText("TFLITE");
   }
 
-  @Override
-  public void onClick(View v) {
-    if (v.getId() == R.id.plus) {
-      String threads = threadsTextView.getText().toString().trim();
-      int numThreads = Integer.parseInt(threads);
-      if (numThreads >= 9) return;
-      numThreads++;
-      threadsTextView.setText(String.valueOf(numThreads));
-      setNumThreads(numThreads);
-    } else if (v.getId() == R.id.minus) {
-      String threads = threadsTextView.getText().toString().trim();
-      int numThreads = Integer.parseInt(threads);
-      if (numThreads == 1) {
-        return;
-      }
-      numThreads--;
-      threadsTextView.setText(String.valueOf(numThreads));
-      setNumThreads(numThreads);
-    }
-  }
-
   protected void showFrameInfo(String frameInfo) {
     frameValueTextView.setText(frameInfo);
   }
 
   protected void showCropInfo(String cropInfo) {
     cropValueTextView.setText(cropInfo);
-  }
-
-  protected void showInference(String inferenceTime) {
-    inferenceTimeTextView.setText(inferenceTime);
   }
 
   protected abstract void processImage();
@@ -546,4 +533,10 @@ public abstract class CameraActivity extends AppCompatActivity
   protected abstract void setNumThreads(int numThreads);
 
   protected abstract void setUseNNAPI(boolean isChecked);
+
+  @Override
+  protected void onResumeFragments() {
+    super.onResumeFragments();
+    setFragment();
+  }
 }
