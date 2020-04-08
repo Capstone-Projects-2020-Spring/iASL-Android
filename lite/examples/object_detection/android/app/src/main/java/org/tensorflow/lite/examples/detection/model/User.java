@@ -2,11 +2,13 @@ package org.tensorflow.lite.examples.detection.model;
 
 public class User {
     private String id;
-    private String username;
+    private String name;
+    private String email;
 
-    public User (String id, String username){
+    public User (String email, String id, String name){
         this.id = id;
-        this.username = username;
+        this.name = name;
+        this.email = email;
     }
 
     public User(){
@@ -18,16 +20,22 @@ public class User {
         this.id = id;
     }
 
-    public void setUsername(String username){
-        this.username = username;
+    public void setName(String name){
+        this.name = name;
     }
+
+    public void setEmail(String email) {this.email = email;}
 
     public String getId(){
         return this.id;
     }
 
-    public String getUsername(){
-        return this.username;
+    public String getName(){
+        return this.name;
     }
+
+    public String getEmail(){return this.email;}
+
+
 
 }

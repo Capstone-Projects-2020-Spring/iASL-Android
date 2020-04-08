@@ -17,8 +17,10 @@ import android.media.ImageReader;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
@@ -33,6 +35,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -91,7 +96,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final ChatWindow.DetectorMode MODE = ChatWindow.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -100,6 +105,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private Integer sensorOrientation;
 
     private Classifier detector;
+
+    private HashMap<String, Integer> preprocessBuffer = new HashMap<String, Integer>();
+    StringBuilder note = new StringBuilder();
+    int recurCount = 0;
+    int recurCountNonLetter = 0;
+    String lastLetter, lastNonLetter;
 
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
@@ -181,13 +192,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
 
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-        reference = FirebaseDatabase.getInstance().getReference("Users").child(userid);
-        reference.addValueEventListener(new ValueEventListener() {
+        reference = FirebaseDatabase.getInstance().getReference("users").child(userid);
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
-                username.setText(user.getUsername());
-
+                username.setText(user.getName());
                 readMessage(firebaseUser.getUid(), userid);
             }
 
@@ -200,29 +210,66 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     private void sendMessage(String sender, String receiver, String message){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        HashMap<String, Object> hashmap = new HashMap<>();
-        hashmap.put("sender",sender);
-        hashmap.put("receiver",receiver);
-        hashmap.put("message", message);
-
-        reference.child("Chats").push().setValue(hashmap);
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("senderId",sender);
+        hashMap.put("receiverId",receiver);
+        hashMap.put("text", message);
+        hashMap.put("timestamp", System.currentTimeMillis());
+        reference = reference.child("messages");
+        String message_id = reference.push().getKey();
+        reference.child(message_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put(message_id, 1);
+                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-messages");
+                reference1.child(sender).updateChildren(hashMap);
+                FirebaseDatabase.getInstance().getReference("user-messages").child(receiver).updateChildren(hashMap);
+            }
+        });
     }
 
     private void readMessage(final String myid, final String userid){
+        Log.d("test", "readMessage is invoked");
         mChats = new ArrayList<>();
-        reference = FirebaseDatabase.getInstance().getReference("Chats");
-        reference.addValueEventListener(new ValueEventListener() {
+        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
+        recyclerView.setAdapter(messageAdapter);
+
+        FirebaseDatabase.getInstance().getReference("user-messages").child(myid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d("test","data changed! event invoked!");
                 mChats.clear();
+                DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()){
-                    Chat chat = snapshot.getValue(Chat.class);
-                    if (chat.getReceiver().equals(myid) && chat.getSender().equals(userid) ||
-                    chat.getReceiver().equals(userid) && chat.getSender().equals(myid)){
-                        mChats.add(chat);
-                    }
-                    messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
-                    recyclerView.setAdapter(messageAdapter);
+                    DatabaseReference message = messagesRef.child(snapshot.getKey());
+                    message.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            Log.d("test",String.valueOf(dataSnapshot.getChildrenCount()));
+                            Chat chat = dataSnapshot.getValue(Chat.class);
+
+                            if (chat.getReceiverId().equals(myid) && chat.getSenderId().equals(userid) ||
+                                    chat.getReceiverId().equals(userid) && chat.getSenderId().equals(myid)){
+                                Log.d("test", "chat added from " +firebaseUser.getUid() + "to " + chat.getReceiverId());
+                                mChats.add(chat);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        messageAdapter = new MessageAdapter(ChatWindow.this, mChats);
+                                        recyclerView.setAdapter(messageAdapter);
+                                        recyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
+                                    }
+                                });
+
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
                 }
             }
 
@@ -356,10 +403,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 canvas.drawRect(location, paint);
 
-                                cropToFrameTransform.mapRect(location);
-                                result.setLocation(location);
-                                mappedRecognitions.add(result);
-                                label = result;
+                                showPrediction(result.getTitle());
                             }
                         }
 
@@ -367,20 +411,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
-
-                        runOnUiThread(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                                        //Show prediction
-                                        if (use_auto_prediction){
-                                            if (label != null) {
-                                                showPrediction(label.getTitle() + " ");
-                                            }
-                                        }
-                                    }
-                                });
                     }
                 });
     }
@@ -464,9 +494,46 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         }
     }
 
-    private void showPrediction(String pred){
-        if (!pred.equals("nothing ")) {
-            text_send.append(pred);
+    protected void showPrediction(String pred){
+        if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
+            if (pred.equals(lastLetter)) {
+                recurCount++;
+            } else {
+                lastLetter = pred;
+                recurCount = 0;
+            }
+
+            if (recurCount > 2) {
+                appendText(lastLetter);
+                recurCount = 0;
+            }
+        } else {
+            if (pred.equals(lastNonLetter)){
+                recurCountNonLetter++;
+            } else {
+                lastNonLetter = pred;
+                recurCountNonLetter = 0;
+            }
+
+            if (recurCountNonLetter > 2){
+                appendText(lastNonLetter);
+                recurCountNonLetter = 0;
+            }
         }
+
+    }
+
+    private void appendText(String text){
+        if (note.length() > 0 && text.equals("del")){
+            note.deleteCharAt(note.length()-1);
+        } else if (text.equals("space")){
+            note.append(" ");
+        } else if (text.equals("nothing")){
+            //Do nothing
+        } else {
+            note.append(text);
+        }
+
+        text_send.setText(note.toString());
     }
 }
