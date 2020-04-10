@@ -1,20 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
     android:layout_height="match_parent"
-    tools:context=".StartActivity">
+    tools:context=".StartActivity"
+    android:background="#E91E63">
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="150dp"
+        android:layout_centerHorizontal="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/iasl_logo2" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
-        android:text="iASL Messaging"
-        android:textSize="25sp"
-        android:textStyle="bold" />
+        android:text="iASL"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_below="@+id/logo"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/banner"/>
 
     <Button
         android:id="@+id/register"
@@ -22,9 +36,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:background="@drawable/rounded"
+        android:layout_centerHorizontal="true"
         android:fontFamily="monospace"
         android:text="Register"
-        android:textSize="25sp" />
+        android:textSize="25sp"
+        android:textColor="#E91E63"
+        android:textStyle="bold"
+        android:layout_below="@id/banner"/>
 
     <Button
         android:id="@+id/login"
@@ -33,7 +51,11 @@
         android:layout_marginTop="10dp"
         android:background="@drawable/rounded"
         android:fontFamily="monospace"
-        android:text="Login"
-        android:textSize="25sp" />
+        android:text="Already a user? Login"
+        android:layout_centerHorizontal="true"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:textColor="#E91E63"
+        android:layout_below="@id/register"/>
 
-</LinearLayout>
+</RelativeLayout>

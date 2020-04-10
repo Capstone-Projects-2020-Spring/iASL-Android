@@ -24,7 +24,7 @@ public class StartActivity extends AppCompatActivity {
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (firebaseUser != null){
-            Intent intent = new Intent(StartActivity.this, MessagingActivity.class);
+            Intent intent = new Intent(StartActivity.this, DetectorActivity.class);
             startActivity(intent);
             finish();
         }

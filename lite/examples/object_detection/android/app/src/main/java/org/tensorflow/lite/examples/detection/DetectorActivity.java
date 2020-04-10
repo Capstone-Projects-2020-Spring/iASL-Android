@@ -33,6 +33,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Toast;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.List;
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
@@ -85,6 +86,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private MultiBoxTracker tracker;
 
   private BorderedText borderedText;
+  DecimalFormat df = new DecimalFormat("0.00");
 
   @Override
   public void onPreviewSizeChosen(final Size size, final int rotation) {
@@ -208,21 +210,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               final RectF location = result.getLocation();
               if (location != null && result.getConfidence() >= minimumConfidence) {
                 showFrameInfo(result.getTitle());
+                showConfidence(df.format(result.getConfidence()*100) + "%");
               }
             }
 
-//            tracker.trackResults(mappedRecognitions, currTimestamp);
-//            trackingOverlay.postInvalidate();
-
             computingDetection = false;
-
-            runOnUiThread(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                  }
-                });
           }
         });
   }

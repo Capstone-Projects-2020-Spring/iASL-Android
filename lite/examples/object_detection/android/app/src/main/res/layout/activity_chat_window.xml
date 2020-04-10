@@ -5,33 +5,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ChatWindow"
-    android:background="@color/tfe_color_primary_dark">
+    android:background="#FFFFFF">
 
-    <com.google.android.material.appbar.AppBarLayout
+<com.google.android.material.appbar.AppBarLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/bar_layout"
+    android:background="#E91E63">
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/bar_layout"
-        android:background="@color/tfe_color_primary">
+        android:background="#E91E63"
+        android:theme="@style/Widget.AppCompat.ActionBar">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/username"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/tfe_color_primary_dark"
-            android:theme="@style/Widget.AppCompat.ActionBar">
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp"
+            android:fontFamily="monospace"
+            android:text="Username"
+            android:textColor="#fff"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+</com.google.android.material.appbar.AppBarLayout>
 
-            <TextView
-                android:id="@+id/username"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
-                android:layout_marginLeft="25dp"
-                android:fontFamily="monospace"
-                android:text="Username"
-                android:textColor="#fff"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-        </androidx.appcompat.widget.Toolbar>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F35F91"
+        android:orientation="horizontal"
+        android:layout_above="@id/bottom"
+        android:gravity="right"
+        android:id="@+id/feature_bar">
+
+        <ImageButton
+            android:id="@+id/btn_stt"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/ic_mic"
+            android:layout_gravity="right"
+            android:layout_marginRight="10dp" />
 
         <ImageButton
             android:id="@+id/btn_camera"
@@ -41,14 +58,15 @@
             android:layout_gravity="right"
             android:layout_marginRight="10dp" />
 
-    </com.google.android.material.appbar.AppBarLayout>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@id/recycler_view"
         android:layout_below="@id/bar_layout"
-        android:layout_above="@id/bottom" />
+        android:layout_above="@id/feature_bar"
+        android:background="#FFFFFF"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -66,7 +84,7 @@
             android:hint="Type a message..."
             android:layout_toLeftOf="@id/btn_send"
             android:layout_centerVertical="true"/>
-        
+
         <ImageButton
             android:layout_width="40dp"
             android:layout_height="40dp"

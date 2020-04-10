@@ -272,14 +272,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
-
-                        runOnUiThread(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                                    }
-                                });
                     }
                 });
     }

@@ -46,11 +46,14 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.nio.ByteBuffer;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
@@ -82,11 +85,14 @@ public abstract class CameraActivity extends AppCompatActivity
   private LinearLayout gestureLayout;
   private BottomSheetBehavior<LinearLayout> sheetBehavior;
 
-  protected TextView frameValueTextView, cropValueTextView;
+  protected TextView PredictionTextView, ConfidenceTextView;
   protected ImageView bottomSheetArrowImageView;
   private ImageView plusImageView, minusImageView;
   private SwitchCompat apiSwitchCompat;
   private TextView threadsTextView;
+
+  ImageButton noteButton, msgButton;
+  Button btn_logout;
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -95,9 +101,6 @@ public abstract class CameraActivity extends AppCompatActivity
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     setContentView(R.layout.tfe_od_activity_camera);
-    Toolbar toolbar = findViewById(R.id.toolbar);
-    setSupportActionBar(toolbar);
-    getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (hasPermission()) {
       setFragment();
@@ -105,14 +108,24 @@ public abstract class CameraActivity extends AppCompatActivity
       requestPermission();
     }
 
-    apiSwitchCompat = findViewById(R.id.api_info_switch);
+    //apiSwitchCompat = findViewById(R.id.api_info_switch);
     bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
     gestureLayout = findViewById(R.id.gesture_layout);
     sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
     bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
     //Set up buttons
-    Button noteButton = findViewById(R.id.noteButton);
-    Button msgButton = findViewById(R.id.msgButton);
+    noteButton = findViewById(R.id.noteButton);
+    msgButton = findViewById(R.id.msgButton);
+
+    btn_logout = findViewById(R.id.btn_logout);
+    btn_logout.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(CameraActivity.this, StartActivity.class));
+        finish();
+      }
+    });
 
     noteButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -124,7 +137,7 @@ public abstract class CameraActivity extends AppCompatActivity
     msgButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        startActivity(new Intent(view.getContext(), StartActivity.class));
+        startActivity(new Intent(view.getContext(), MessagingActivity.class));
       }
     });
 
@@ -141,7 +154,7 @@ public abstract class CameraActivity extends AppCompatActivity
             //                int width = bottomSheetLayout.getMeasuredWidth();
             int height = gestureLayout.getMeasuredHeight();
 
-            sheetBehavior.setPeekHeight(height);
+            sheetBehavior.setPeekHeight(300);
           }
         });
     sheetBehavior.setHideable(false);
@@ -175,10 +188,10 @@ public abstract class CameraActivity extends AppCompatActivity
           public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
         });
 
-    frameValueTextView = findViewById(R.id.frame_info);
-    cropValueTextView = findViewById(R.id.crop_info);
+      PredictionTextView = findViewById(R.id.prediction_frame);
+      ConfidenceTextView = findViewById(R.id.confidence_score_text_view);
 
-    apiSwitchCompat.setOnCheckedChangeListener(this);
+    //apiSwitchCompat.setOnCheckedChangeListener(this);
   }
 
   protected int[] getRgbBytes() {
@@ -317,6 +330,9 @@ public abstract class CameraActivity extends AppCompatActivity
     handlerThread = new HandlerThread("inference");
     handlerThread.start();
     handler = new Handler(handlerThread.getLooper());
+
+    noteButton.bringToFront();
+    msgButton.bringToFront();
   }
 
   @Override
@@ -515,11 +531,11 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   protected void showFrameInfo(String frameInfo) {
-    frameValueTextView.setText(frameInfo);
+      PredictionTextView.setText(frameInfo);
   }
 
-  protected void showCropInfo(String cropInfo) {
-    cropValueTextView.setText(cropInfo);
+  protected void showConfidence(String score) {
+    ConfidenceTextView.setText(score);
   }
 
   protected abstract void processImage();

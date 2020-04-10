@@ -19,55 +19,87 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#00000000">
+    android:background="#FFFFFF">
 
     <RelativeLayout
         android:id="@+id/relativeLayout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/black"
+        android:background="#FFFFFF"
         android:orientation="vertical">
 
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_alignParentTop="true"
-            android:background="#00000000"
-            android:backgroundTint="#00FFFFFF">
-
-            <Button
+            <ImageButton
                 android:id="@+id/noteButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
                 android:background="#00FFFFFF"
                 android:fadingEdge="horizontal"
-                android:fontFamily="monospace"
                 android:hapticFeedbackEnabled="true"
-                android:text="Take Note"
-                android:textColor="#FFFFFF" />
+                android:scaleType="fitCenter"
+                android:src="@drawable/noteicon"
+                android:visibility="visible" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/msgButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentRight="true"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="10dp"
                 android:background="#00FFFFFF"
-                android:fontFamily="monospace"
-                android:text="Message"
-                android:textColor="#FFFFFF" />
-        </androidx.appcompat.widget.Toolbar>
+                android:scaleType="fitCenter"
+                android:src="@drawable/chaticon"
+                android:visibility="visible" />
+
+        <Button
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="tutorial"
+            android:background="@drawable/rounded_yellow"
+            android:textColor="#FFFFFF"
+            android:layout_below="@id/container"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="25dp"
+            android:textSize="30dp"
+            android:id="@+id/btn_tutorial"
+            />
+
+        <Button
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="about"
+            android:background="@drawable/rounded_yellow"
+            android:textColor="#FFFFFF"
+            android:layout_below="@id/btn_tutorial"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="10dp"
+            android:textSize="30dp"
+            android:id="@+id/btn_about"
+            />
+
+        <Button
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:text="logout"
+            android:background="@drawable/rounded_red"
+            android:textColor="#FFFFFF"
+            android:layout_below="@id/btn_about"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="10dp"
+            android:textSize="30dp"
+            android:id="@+id/btn_logout"
+            />
 
         <FrameLayout
             android:id="@+id/container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="411dp"
             android:layout_marginEnd="0dp"
-            android:layout_marginBottom="110dp"
-            android:layout_marginTop="50dp"
+            android:background="#FFFFFF"
             tools:context="org.tensorflow.demo.CameraActivity" />
-
-
     </RelativeLayout>
 
     <include

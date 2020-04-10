@@ -17,7 +17,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.ObjectDetection">
         <activity android:name=".ChatWindow"></activity>
-        <activity android:name=".StartActivity" />
         <activity
             android:name=".LoginActivity"
             android:parentActivityName=".StartActivity" />
@@ -27,15 +26,16 @@
             android:parentActivityName=".StartActivity" />
         <activity android:name=".NoteTakingActivity" />
         <activity
-            android:name=".DetectorActivity"
+            android:name=".StartActivity"
             android:label="iASL"
             android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".DetectorActivity"/>
     </application>
 
 </manifest>

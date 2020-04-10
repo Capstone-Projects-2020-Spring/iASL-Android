@@ -1,9 +1,11 @@
 package org.tensorflow.lite.examples.detection;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.util.Size;
@@ -62,20 +65,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatWindow extends CameraActivity implements ImageReader.OnImageAvailableListener {
     TextView username;
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     private static final int PERMISSIONS_REQUEST = 1;
 
-    Boolean use_auto_prediction = true;
+    Boolean use_camera_prediction = true, use_speech_to_text = false;
     EditText txt_message;
 
     FirebaseUser firebaseUser;
     DatabaseReference reference;
 
-    ImageButton btn_send;
-    ImageButton btn_camera;
+    ImageButton btn_send, btn_camera, btn_stt;
     EditText text_send;
 
     MessageAdapter messageAdapter;
@@ -85,6 +88,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     Intent intent;
     Classifier.Recognition label;
+    FrameLayout CameraContainer;
 
 
     private static final Logger LOGGER = new Logger();
@@ -145,8 +149,10 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         });
 
         txt_message = findViewById(R.id.text_send);
-
+        btn_stt = findViewById(R.id.btn_stt);
         btn_camera = findViewById(R.id.btn_camera);
+
+        CameraContainer = findViewById(R.id.container);
 
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
@@ -168,6 +174,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 if (!msg.equals("")){
                     sendMessage(firebaseUser.getUid(), userid, msg);
                 }
+                note.delete(0, note.length());
                 text_send.setText("");
             }
         });
@@ -175,17 +182,18 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         btn_camera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FrameLayout frameLayout = findViewById(R.id.container);
-                if (frameLayout.getVisibility() == View.INVISIBLE){
-                    frameLayout.setVisibility(View.VISIBLE);
+                if (CameraContainer.getVisibility() == View.INVISIBLE){
+                    CameraContainer.setVisibility(View.VISIBLE);
                     ImageButton btn_camera = findViewById(R.id.btn_camera);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
-                    use_auto_prediction = true;
+                    use_camera_prediction = true;
+                    use_speech_to_text = false;
                 } else {
-                    frameLayout.setVisibility(View.INVISIBLE);
+                    CameraContainer.setVisibility(View.INVISIBLE);
                     ImageButton btn_camera = findViewById(R.id.btn_camera);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
-                    use_auto_prediction = false;
+                    use_camera_prediction = false;
+                    use_speech_to_text = true;
                 }
             }
         });
@@ -206,6 +214,49 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
             }
         });
+
+        btn_stt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (use_speech_to_text) {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now");
+                    try {
+                        startActivityForResult(intent, 100);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(ChatWindow.this, "Sorry, this feature is not supported on your device", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(ChatWindow.this, "You can't use this feature while the camera is on", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
+    public synchronized void onResume() {
+        super.onResume();
+        CameraContainer.setVisibility(View.INVISIBLE);
+        ImageButton btn_camera = findViewById(R.id.btn_camera);
+        btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
+        use_camera_prediction = false;
+        use_speech_to_text = true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 100:{
+                if (resultCode == RESULT_OK && null != data){
+                    ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    text_send.append(result.get(0).toString());
+                }
+                break;
+            }
+        }
     }
 
     private void sendMessage(String sender, String receiver, String message){
@@ -402,7 +453,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 canvas.drawRect(location, paint);
-
                                 showPrediction(result.getTitle());
                             }
                         }
@@ -524,16 +574,19 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     }
 
     private void appendText(String text){
-        if (note.length() > 0 && text.equals("del")){
-            note.deleteCharAt(note.length()-1);
-        } else if (text.equals("space")){
-            note.append(" ");
-        } else if (text.equals("nothing")){
-            //Do nothing
-        } else {
-            note.append(text);
-        }
+        if (use_camera_prediction) {
+            if (note.length() > 0 && text.equals("del")) {
+                note.deleteCharAt(note.length() - 1);
+            } else if (text.equals("space")) {
+                note.append(" ");
+            } else if (text.equals("nothing")) {
+                //Do nothing
+            } else {
+                note.append(text);
+            }
+            //TODO Try to append letter instead of a while note.
 
-        text_send.setText(note.toString());
+            text_send.append(note.toString()); //Crash here
+        }
     }
 }
