@@ -24,6 +24,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
@@ -115,6 +118,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             @Override
             public void onClick(View v){
                 //Send contents of text field as note to Firebase
+                String NoteToSave = textView.getText().toString();
             }
         });
 
@@ -154,6 +158,17 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         preprocessBuffer.put("space",0);
 
 
+    }
+
+    //experimental
+    private void sendNote(String sender, String message){
+        /*
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("senderID", sender);
+        hashMap.put("text", message);
+        hashMap.put("timestamp", System.currentTimeMillis());
+        */
     }
 
     @Override
