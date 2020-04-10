@@ -24,6 +24,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -160,15 +164,26 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     }
 
-    //experimental
-    private void sendNote(String sender, String message){
-        /*
+    private void sendNote(String owner, String title, String message){
+
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         HashMap<String, Object> hashMap = new HashMap<>();
-        hashMap.put("senderID", sender);
+        hashMap.put("ownerId", owner);
+        hashMap.put("title", title);
         hashMap.put("text", message);
         hashMap.put("timestamp", System.currentTimeMillis());
-        */
+        reference = reference.child("notes");
+        String note_id = reference.push().getKey();
+
+        reference.child(note_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put(note_id, 1);
+                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
+                reference1.child(owner).updateChildren(hashMap);
+            }
+        });
     }
 
     @Override
