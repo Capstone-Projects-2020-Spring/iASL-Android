@@ -111,6 +111,13 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             }
         });
 
+        findViewById(R.id.saveButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                //Send contents of text field as note to Firebase
+            }
+        });
+
         Button backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(view -> finish());
 
