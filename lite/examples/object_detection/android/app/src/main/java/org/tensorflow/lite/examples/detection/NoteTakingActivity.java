@@ -186,6 +186,11 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         });
     }
 
+    private void readNote(final String myid, final String userid){
+        Log.d("test", "readNote is invoked");
+
+    }
+
     @Override
     public void onPreviewSizeChosen(final Size size, final int rotation) {
         final float textSizePx =
