@@ -28,6 +28,8 @@ import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -93,6 +95,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     private TextToSpeech textToSpeech;
 
+    FirebaseUser firebaseUser;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,8 +125,11 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         findViewById(R.id.saveButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
-                //Send contents of text field as note to Firebase
-                String NoteToSave = textView.getText().toString();
+                String[] msgArr = textView.getText().toString().split("\n", 2);
+                if(!msgArr[0].equals("")){
+                    sendNote(firebaseUser.getUid(), msgArr[0], msgArr[1]);
+                }
+                textView.setText("");
             }
         });
 
@@ -168,6 +175,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         preprocessBuffer.put("nothing",0);
         preprocessBuffer.put("space",0);
 
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
     }
 
