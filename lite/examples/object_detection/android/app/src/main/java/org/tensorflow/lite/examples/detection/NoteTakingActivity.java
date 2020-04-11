@@ -126,6 +126,13 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             }
         });
 
+        findViewById(R.id.notesButton).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //Invoke view for browsing old notes
+            }
+        });
+
         Button backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(view -> finish());
 
