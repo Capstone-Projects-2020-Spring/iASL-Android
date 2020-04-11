@@ -189,6 +189,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         hashMap.put("timestamp", System.currentTimeMillis());
         reference = reference.child("notes");
         String note_id = reference.push().getKey();
+        hashMap.put("id", note_id);
 
         reference.child(note_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
