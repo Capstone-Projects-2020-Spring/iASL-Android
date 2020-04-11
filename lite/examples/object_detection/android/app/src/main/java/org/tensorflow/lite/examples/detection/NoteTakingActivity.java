@@ -1,5 +1,7 @@
 package org.tensorflow.lite.examples.detection;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,6 +14,7 @@ import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.TestLooperManager;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,18 +24,36 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.model.Note;
+import org.tensorflow.lite.examples.detection.model.User;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
-import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -77,21 +98,107 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
 
-    private MultiBoxTracker tracker;
-
     private BorderedText borderedText;
-    private EditText textView;
+    private EditText noteEditText, noteTitleEditText;
 
-    private String currentNote = "";
+    private String currentNote = "", noteTitle="", currentNoteId="";
 
     private TextToSpeech textToSpeech;
+
+    TextView username;
+
+    boolean use_camera_prediction = true, use_speech_to_text = false;
+
+    FirebaseUser firebaseUser;
+    DatabaseReference reference;
+    ImageButton btn_camera, btn_notelist, btn_save, btn_delete;
+
+    FrameLayout CameraContainer;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.note_taking_activity);
 
-        textView = findViewById(R.id.textView);
+        noteEditText = findViewById(R.id.textView);
+        noteTitleEditText = findViewById(R.id.note_title);
+
+        Intent intent = getIntent();
+        if (intent.getExtras() != null){
+            noteTitle = intent.getStringExtra("title");
+            currentNote = intent.getStringExtra("text");
+            currentNoteId = intent.getStringExtra("noteId");
+            noteTitleEditText.setText(noteTitle);
+            noteEditText.setText(currentNote);
+        } else {
+            noteTitle ="";
+            currentNote="";
+            currentNoteId="";
+        }
+
+        noteEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cameraPredictionDisable();
+            }
+        });
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("");
+
+        CameraContainer = findViewById(R.id.container);
+
+        btn_save = findViewById(R.id.btn_save);
+        btn_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveCurrentNote();
+            }
+        });
+
+        btn_camera = findViewById(R.id.btn_camera);
+        btn_camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (CameraContainer.getVisibility() == View.INVISIBLE){
+                    CameraContainer.setVisibility(View.VISIBLE);
+                    btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
+                    use_camera_prediction = true;
+                    use_speech_to_text = false;
+                } else {
+                    cameraPredictionDisable();
+                }
+            }
+        });
+
+        btn_notelist = findViewById(R.id.note_list);
+        btn_notelist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(NoteTakingActivity.this, NoteListActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        username = findViewById(R.id.username);
+
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        reference = FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid());
+
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                username.setText(user.getName());
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
@@ -102,17 +209,33 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             }
         });
 
-        findViewById(R.id.tts).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_tts).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String toSpeak = textView.getText().toString();
+                String toSpeak = noteEditText.getText().toString();
                 Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null); //TODO TTS DOESN'T WORK AFTER STT
             }
         });
 
-        Button backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(view -> finish());
+        findViewById(R.id.btn_stt).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (use_speech_to_text) {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now");
+                    try {
+                        startActivityForResult(intent, 100);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(NoteTakingActivity.this, "Sorry, this feature is not supported on your device", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "You can't use this feature while the camera is on", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -150,14 +273,65 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     @Override
+    public synchronized void onResume() {
+        super.onResume();
+        cameraPredictionDisable();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 100:{
+                if (resultCode == RESULT_OK && null != data){
+                    ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    noteEditText.append(result.get(0).toString());
+                }
+                break;
+            }
+        }
+    }
+
+    private void cameraPredictionDisable(){
+        CameraContainer.setVisibility(View.INVISIBLE);
+        btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
+        use_camera_prediction = false;
+        use_speech_to_text = true;
+        note.delete(0 , note.length());
+    }
+
+    private void saveCurrentNote(){
+        //TODO Implement Note Saving to Firebase
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        reference = reference.child("notes");
+        if (currentNoteId == "") {
+            currentNoteId = reference.push().getKey();
+        }
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("id",currentNoteId);
+        hashMap.put("ownerId",FirebaseAuth.getInstance().getCurrentUser().getUid());
+        hashMap.put("text", noteEditText.getText().toString());
+        hashMap.put("timestamp", System.currentTimeMillis());
+        hashMap.put("title",noteTitleEditText.getText().toString());
+        reference.child(currentNoteId).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put(currentNoteId, 1);
+                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
+                reference1.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(hashMap);
+                Toast.makeText(NoteTakingActivity.this, "Note saved!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
     public void onPreviewSizeChosen(final Size size, final int rotation) {
         final float textSizePx =
                 TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
-
-        tracker = new MultiBoxTracker(this);
 
         int cropSize = TF_OD_API_INPUT_SIZE;
 
@@ -202,18 +376,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         frameToCropTransform.invert(cropToFrameTransform);
 
         trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
-        trackingOverlay.addCallback(
-                new OverlayView.DrawCallback() {
-                    @Override
-                    public void drawCallback(final Canvas canvas) {
-                        tracker.draw(canvas);
-                        if (isDebug()) {
-                            tracker.drawDebug(canvas);
-                        }
-                    }
-                });
-
-        tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
     }
 
     @Override
@@ -268,7 +430,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                             }
                         }
 
-                        tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
@@ -313,6 +474,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
 
+
     protected void showPrediction(String pred){
         if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
             if (pred.equals(lastLetter)) {
@@ -322,7 +484,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                 recurCount = 0;
             }
 
-            if (recurCount > 3) {
+            if (recurCount > 2) {
                 appendText(lastLetter);
                 recurCount = 0;
             }
@@ -343,17 +505,24 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     private void appendText(String text){
-        if (note.length() > 0 && text.equals("del")){
-            note.deleteCharAt(note.length()-1);
-        } else if (text.equals("space")){
-            note.append(" ");
-        } else if (text.equals("nothing")){
-            //Do nothing
-        } else {
-            note.append(text);
-        }
+        if (use_camera_prediction) {
+            if (text.equals("del")) {
+                if (text.length() > 0) {
+                    note.deleteCharAt(note.length() - 1);
+                }
+            } else if (text.equals("space")) {
+                note.append(" ");
+            } else if (text.equals("nothing")) {
+                //Do nothing
+            } else {
+                note.append(text);
+            }
+            //TODO Try to append letter instead of a while note.
 
-        textView.setText(note.toString());
+            noteEditText.setText(note.toString()); //Crash here
+            noteEditText.
+            noteEditText.setSelection(noteEditText.getText().toString().length());
+        }
     }
 
     @Override

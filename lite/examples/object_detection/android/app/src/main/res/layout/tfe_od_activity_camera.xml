@@ -18,8 +18,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/relativeLayout2"
@@ -62,7 +61,7 @@
             android:textColor="#FFFFFF"
             android:layout_below="@id/container"
             android:layout_centerInParent="true"
-            android:layout_marginTop="25dp"
+            android:layout_marginTop="27dp"
             android:textSize="30dp"
             android:id="@+id/btn_tutorial"
             />

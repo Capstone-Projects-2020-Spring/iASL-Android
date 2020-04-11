@@ -43,7 +43,6 @@ import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
-import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 import android.media.ThumbnailUtils;
 
 
@@ -83,8 +82,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private Matrix frameToCropTransform;
   private Matrix cropToFrameTransform;
 
-  private MultiBoxTracker tracker;
-
   private BorderedText borderedText;
   DecimalFormat df = new DecimalFormat("0.00");
 
@@ -95,8 +92,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
     borderedText = new BorderedText(textSizePx);
     borderedText.setTypeface(Typeface.MONOSPACE);
-
-    tracker = new MultiBoxTracker(this);
 
     int cropSize = TF_OD_API_INPUT_SIZE;
 
@@ -127,9 +122,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
     rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-    int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
     croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
-    //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
     frameToCropTransform =
         ImageUtils.getTransformationMatrix(
@@ -141,18 +134,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     frameToCropTransform.invert(cropToFrameTransform);
 
     trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
-    trackingOverlay.addCallback(
-        new DrawCallback() {
-          @Override
-          public void drawCallback(final Canvas canvas) {
-            tracker.draw(canvas);
-            if (isDebug()) {
-              tracker.drawDebug(canvas);
-            }
-          }
-        });
-
-    tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
   }
 
   @Override

@@ -19,15 +19,12 @@ import android.media.ImageReader;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.speech.RecognizerIntent;
-import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -39,7 +36,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -58,7 +54,6 @@ import org.tensorflow.lite.examples.detection.model.Chat;
 import org.tensorflow.lite.examples.detection.model.User;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
-import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,7 +82,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     RecyclerView recyclerView;
 
     Intent intent;
-    Classifier.Recognition label;
     FrameLayout CameraContainer;
 
 
@@ -127,8 +121,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
-
-    private MultiBoxTracker tracker;
 
     private BorderedText borderedText;
 
@@ -184,13 +176,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             public void onClick(View view) {
                 if (CameraContainer.getVisibility() == View.INVISIBLE){
                     CameraContainer.setVisibility(View.VISIBLE);
-                    ImageButton btn_camera = findViewById(R.id.btn_camera);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
                     use_camera_prediction = true;
                     use_speech_to_text = false;
                 } else {
                     CameraContainer.setVisibility(View.INVISIBLE);
-                    ImageButton btn_camera = findViewById(R.id.btn_camera);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
                     use_camera_prediction = false;
                     use_speech_to_text = true;
@@ -339,8 +329,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
 
-        tracker = new MultiBoxTracker(this);
-
         int cropSize = TF_OD_API_INPUT_SIZE;
 
         try {
@@ -370,9 +358,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-        int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
         croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
-        //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
@@ -384,18 +370,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         frameToCropTransform.invert(cropToFrameTransform);
 
         trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
-        trackingOverlay.addCallback(
-                new OverlayView.DrawCallback() {
-                    @Override
-                    public void drawCallback(final Canvas canvas) {
-                        tracker.draw(canvas);
-                        if (isDebug()) {
-                            tracker.drawDebug(canvas);
-                        }
-                    }
-                });
-
-        tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
     }
 
     @Override
@@ -456,8 +430,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                                 showPrediction(result.getTitle());
                             }
                         }
-
-                        tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
@@ -468,12 +440,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     @Override
     protected int getLayoutId() {
         return R.layout.tfe_od_camera_connection_fragment_tracking;
-    }
-
-    public int getSquareCropDimensionForBitmap(Bitmap bitmap)
-    {
-        //use the smallest dimension of the image to crop to
-        return Math.min(bitmap.getWidth(), bitmap.getHeight());
     }
 
     @Override
@@ -521,14 +487,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             }
         }
         return true;
-    }
-
-    private boolean hasPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED;
-        } else {
-            return true;
-        }
     }
 
     private void requestPermission() {
