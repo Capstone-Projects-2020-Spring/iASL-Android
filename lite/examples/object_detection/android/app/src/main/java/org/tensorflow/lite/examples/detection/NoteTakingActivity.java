@@ -323,7 +323,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-                                //showPrediction(result.getTitle());
+                                showPrediction(result.getTitle());
                             }
                         }
 
