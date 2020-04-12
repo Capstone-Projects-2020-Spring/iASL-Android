@@ -1,5 +1,6 @@
 package org.tensorflow.lite.examples.detection;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -136,7 +137,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         findViewById(R.id.notesButton).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                //Invoke view for browsing old notes
+                startActivity(new Intent(NoteTakingActivity.this, NoteBrowsingActivity.class));
             }
         });
 
