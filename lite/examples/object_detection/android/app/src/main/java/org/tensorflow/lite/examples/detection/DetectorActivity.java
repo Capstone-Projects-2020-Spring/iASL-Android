@@ -204,11 +204,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
     croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, dimension, dimension);
     croppedBitmap = Bitmap.createScaledBitmap(croppedBitmap, TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, false);
-    Log.d("Dimensions: ", String.valueOf(croppedBitmap.getHeight()) + "x" + String.valueOf(croppedBitmap.getWidth()));
     Bitmap vidBitmap = Bitmap.createScaledBitmap(croppedBitmap, 150, 150, false);
-    System.out.println("Frame number: " + numFrames);
-    if(numFrames == 40) {
-      System.out.println("40 FRAMES");
+
+    /*if(numFrames == 40) {
       video.rewind();
       byte[] data = video.array();
       // min API 26?
@@ -241,9 +239,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           rq.add(sr);
         }
       });
-    }
+    }*/
 
-    addPixels(vidBitmap);
+    //addPixels(vidBitmap);
     readyForNextImage();
 
     final Canvas canvas = new Canvas(croppedBitmap);

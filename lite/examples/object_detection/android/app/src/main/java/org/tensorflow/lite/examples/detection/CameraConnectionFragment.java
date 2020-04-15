@@ -25,6 +25,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -53,11 +54,23 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import org.tensorflow.lite.examples.detection.customview.AutoFitTextureView;
@@ -66,6 +79,7 @@ import org.tensorflow.lite.examples.detection.env.Logger;
 @SuppressLint("ValidFragment")
 public class CameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
+  private static int numFrames = 0;
 
   /**
    * The camera preview size will be chosen to be the smallest frame by pixel size capable of
@@ -107,8 +121,11 @@ public class CameraConnectionFragment extends Fragment {
         public void onCaptureCompleted(
             final CameraCaptureSession session,
             final CaptureRequest request,
-            final TotalCaptureResult result) {}
+            final TotalCaptureResult result) {
+          }
       };
+
+
   /** ID of the current {@link CameraDevice}. */
   private String cameraId;
   /** An {@link AutoFitTextureView} for camera preview. */

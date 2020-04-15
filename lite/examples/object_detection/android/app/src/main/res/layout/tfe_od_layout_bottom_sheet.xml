@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:fontFamily="monospace"
-            android:text="Crop"
+            android:text="Confidence"
             android:textColor="@android:color/black" />
 
         <TextView
