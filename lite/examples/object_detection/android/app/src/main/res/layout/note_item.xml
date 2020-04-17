@@ -12,15 +12,29 @@
         android:src="@drawable/icn_note"/>
 
     <TextView
+        android:id="@id/note_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Note Title"
-        android:id="@id/note_title"
-        android:layout_toRightOf="@id/note_icon"
-        android:layout_toEndOf="@id/note_icon"
+        android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_centerVertical="true"
-        android:textSize="18sp"/>
+        android:layout_toEndOf="@id/note_icon"
+        android:layout_toRightOf="@id/note_icon"
+        android:text="Note Title"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:maxLength="20"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/note_title"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="2dp"
+        android:layout_toRightOf="@id/note_icon"
+        android:text="Note Desc"
+        android:textSize="15sp"
+        android:maxLength="30"
+        android:id="@+id/note_desc"/>
 
     <TextView
         android:layout_width="wrap_content"

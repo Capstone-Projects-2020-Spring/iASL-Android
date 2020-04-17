@@ -119,6 +119,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     FrameLayout CameraContainer;
 
+
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

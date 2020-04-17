@@ -41,6 +41,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         Note note = mNotes.get(position);
         holder.noteTitle.setText(note.getTitle());
         holder.createdDate.setText((formatter.format(new Date(note.getTimestamp()))));
+        holder.noteDesc.setText(note.getText());
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,10 +62,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{
-        public TextView noteTitle, createdDate;
+        public TextView noteTitle, createdDate, noteDesc;
 
         public ViewHolder(View itemView){
             super(itemView);
+            noteDesc = itemView.findViewById(R.id.note_desc);
             noteTitle = itemView.findViewById(R.id.note_title);
             createdDate = itemView.findViewById(R.id.note_timestamp);
         }
