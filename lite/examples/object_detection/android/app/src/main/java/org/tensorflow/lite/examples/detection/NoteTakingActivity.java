@@ -16,6 +16,7 @@ import android.os.SystemClock;
 import android.os.TestLooperManager;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Size;
@@ -94,6 +95,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     String lastLetter, lastNonLetter;
 
     private long timestamp = 0;
+    private boolean saved = false;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
@@ -101,7 +103,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private BorderedText borderedText;
     private EditText noteEditText, noteTitleEditText;
 
-    private String currentNote = "", noteTitle="", currentNoteId="";
+    private String currentNote = "", noteTitle="", currentNoteId="", noteBeforeSave="", titleBeforeSave="";
 
     private TextToSpeech textToSpeech;
 
@@ -143,6 +145,23 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             }
         });
 
+        noteEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                saved = false;
+            }
+        });
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("");
@@ -154,6 +173,20 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             @Override
             public void onClick(View view) {
                 saveCurrentNote();
+            }
+        });
+
+        btn_delete = findViewById(R.id.btn_delete);
+        btn_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (shouldDelete()) {
+                    deleteCurrentNote();
+                }
+                Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
+                startActivity(intent);
+                finish();
+
             }
         });
 
@@ -300,29 +333,46 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         note.delete(0 , note.length());
     }
 
-    private void saveCurrentNote(){
-        //TODO Implement Note Saving to Firebase
+    private void deleteCurrentNote(){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        reference = reference.child("notes");
-        if (currentNoteId == "") {
-            currentNoteId = reference.push().getKey();
-        }
-        HashMap<String, Object> hashMap = new HashMap<>();
-        hashMap.put("id",currentNoteId);
-        hashMap.put("ownerId",FirebaseAuth.getInstance().getCurrentUser().getUid());
-        hashMap.put("text", noteEditText.getText().toString());
-        hashMap.put("timestamp", System.currentTimeMillis());
-        hashMap.put("title",noteTitleEditText.getText().toString());
-        reference.child(currentNoteId).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put(currentNoteId, 1);
-                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
-                reference1.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(hashMap);
-                Toast.makeText(NoteTakingActivity.this, "Note saved!", Toast.LENGTH_SHORT).show();
+        DatabaseReference noteRef = reference.child("notes/"+currentNoteId);
+        noteRef.setValue(null);
+        DatabaseReference userNoteRef = reference.child("user-notes/"+FirebaseAuth.getInstance().getCurrentUser().getUid()+'/'+currentNoteId);
+        userNoteRef.setValue(null);
+        Toast.makeText( NoteTakingActivity.this, "Note deleted!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void saveCurrentNote(){
+        if (!noteTitleEditText.getText().equals("")) {
+            //TODO Implement Note Saving to Firebase
+            DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+            reference = reference.child("notes");
+            if (currentNoteId == "") {
+                currentNoteId = reference.push().getKey();
             }
-        });
+            HashMap<String, Object> hashMap = new HashMap<>();
+            hashMap.put("id", currentNoteId);
+            hashMap.put("ownerId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            hashMap.put("text", noteEditText.getText().toString());
+            hashMap.put("timestamp", System.currentTimeMillis());
+            hashMap.put("title", noteTitleEditText.getText().toString());
+            reference.child(currentNoteId).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    HashMap<String, Object> hashMap = new HashMap<>();
+                    hashMap.put(currentNoteId, 1);
+                    DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
+                    reference1.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(hashMap);
+                    Toast.makeText(NoteTakingActivity.this, "Note saved!", Toast.LENGTH_SHORT).show();
+                    noteBeforeSave="";
+                    noteBeforeSave+=currentNote;
+                    titleBeforeSave="";
+                    titleBeforeSave+=noteTitle;
+                }
+            });
+        } else {
+            Toast.makeText(NoteTakingActivity.this, "Title is missing", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -517,6 +567,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                 noteEditText.append(" ");
             } else if (text.equals("nothing")) {
                 //Do nothing
+                return;
             } else {
                 noteEditText.append(text);
             }
@@ -532,5 +583,21 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             textToSpeech.shutdown();
         }
         super.onPause();
+    }
+
+    private boolean shouldSave(){
+        if (noteBeforeSave.equals(noteEditText.getText().toString())){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean shouldDelete() {
+        if (noteTitleEditText.getText().toString().equals("")) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

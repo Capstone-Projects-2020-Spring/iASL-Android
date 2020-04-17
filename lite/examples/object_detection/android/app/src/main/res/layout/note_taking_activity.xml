@@ -33,7 +33,8 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/icn_action_delete"
-                android:layout_marginStart="130dp"/>
+                android:layout_marginStart="130dp"
+                android:id="@+id/btn_delete"/>
 
             <ImageButton
                 android:layout_width="40dp"
