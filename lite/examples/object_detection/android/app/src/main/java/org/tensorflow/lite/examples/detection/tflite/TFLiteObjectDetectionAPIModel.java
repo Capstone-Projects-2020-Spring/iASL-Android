@@ -160,13 +160,13 @@ public class TFLiteObjectDetectionAPIModel implements Classifier {
     matrix.setRotate(degrees);
     matrix.preScale(-1.0f, 1.0f);
 
-    rotatedBitmap = bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
     rotatedBitmap.getPixels(intValues, 0, rotatedBitmap.getWidth(), 0, 0, rotatedBitmap.getWidth(), rotatedBitmap.getHeight());
 
     imgData.rewind();
 
-    float input[][][][] = new float[1][rotatedBitmap.getHeight()][rotatedBitmap.getWidth()][3];
+    float[][][][] input = new float[1][rotatedBitmap.getHeight()][rotatedBitmap.getWidth()][3];
     output = new float[1][NUM_DETECTIONS];
     for (int i = 0; i < inputSize; ++i) {
       for (int j = 0; j < inputSize; ++j) {

@@ -369,7 +369,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         cropToFrameTransform = new Matrix();
         frameToCropTransform.invert(cropToFrameTransform);
 
-        trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
+        trackingOverlay = findViewById(R.id.tracking_overlay);
     }
 
     @Override
@@ -455,7 +455,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     // Which detection model to use: by default uses Tensorflow Object Detection API frozen
     // checkpoints.
     private enum DetectorMode {
-        TF_OD_API;
+        TF_OD_API
     }
 
     @Override

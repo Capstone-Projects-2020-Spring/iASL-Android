@@ -445,7 +445,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         cropToFrameTransform = new Matrix();
         frameToCropTransform.invert(cropToFrameTransform);
 
-        trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
+        trackingOverlay = findViewById(R.id.tracking_overlay);
     }
 
     @Override
@@ -531,7 +531,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     // Which detection model to use: by default uses Tensorflow Object Detection API frozen
     // checkpoints.
     private enum DetectorMode {
-        TF_OD_API;
+        TF_OD_API
     }
 
     @Override
@@ -605,20 +605,12 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     private boolean shouldSave(){
-        if (!noteTitleEditText.getText().toString().equals("")){
-            return true;
-        } else {
-            return false;
-        }
+        return !noteTitleEditText.getText().toString().equals("");
     }
 
     private boolean shouldDelete() {
         //Should delete when something is written
-        if (!noteTitleEditText.getText().toString().equals("") || !noteEditText.getText().toString().equals("")){
-            return true;
-        } else {
-            return false;
-        }
+        return !noteTitleEditText.getText().toString().equals("") || !noteEditText.getText().toString().equals("");
     }
 
 }
