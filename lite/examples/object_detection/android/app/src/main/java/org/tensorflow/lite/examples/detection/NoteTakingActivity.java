@@ -70,7 +70,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final NoteTakingActivity.DetectorMode MODE = NoteTakingActivity.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.85f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -508,19 +508,19 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         if (use_camera_prediction) {
             if (text.equals("del")) {
                 if (text.length() > 0) {
-                    note.deleteCharAt(note.length() - 1);
+                    note.delete(0, note.length());
+                    note.append(noteEditText.getText());
+                    note.deleteCharAt(note.length()-1);
+                    noteEditText.setText(note);
                 }
             } else if (text.equals("space")) {
-                note.append(" ");
+                noteEditText.append(" ");
             } else if (text.equals("nothing")) {
                 //Do nothing
             } else {
-                note.append(text);
+                noteEditText.append(text);
             }
             //TODO Try to append letter instead of a while note.
-
-            noteEditText.setText(note.toString()); //Crash here
-            noteEditText.
             noteEditText.setSelection(noteEditText.getText().toString().length());
         }
     }

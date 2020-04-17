@@ -523,7 +523,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 recurCountNonLetter = 0;
             }
 
-            if (recurCountNonLetter > 2){
+            if (recurCountNonLetter > 1){
                 appendText(lastNonLetter);
                 recurCountNonLetter = 0;
             }
@@ -533,18 +533,22 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     private void appendText(String text){
         if (use_camera_prediction) {
-            if (note.length() > 0 && text.equals("del")) {
-                note.deleteCharAt(note.length() - 1);
+            if (text.equals("del")) {
+                if (text.length() > 0) {
+                    note.delete(0, note.length());
+                    note.append(text_send.getText());
+                    note.deleteCharAt(note.length()-1);
+                    text_send.setText(note);
+                }
             } else if (text.equals("space")) {
-                note.append(" ");
+                text_send.append(" ");
             } else if (text.equals("nothing")) {
                 //Do nothing
             } else {
-                note.append(text);
+                text_send.append(text);
             }
             //TODO Try to append letter instead of a while note.
-
-            text_send.append(note.toString()); //Crash here
+            text_send.setSelection(text_send.getText().toString().length());
         }
     }
 }
