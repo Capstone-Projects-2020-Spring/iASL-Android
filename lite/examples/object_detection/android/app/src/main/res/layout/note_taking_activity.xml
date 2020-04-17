@@ -33,8 +33,15 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/icn_action_delete"
-                android:layout_marginStart="130dp"
+                android:layout_marginStart="85dp"
                 android:id="@+id/btn_delete"/>
+
+            <ImageButton
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/icn_action_new"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/btn_add_new"/>
 
             <ImageButton
                 android:layout_width="40dp"
@@ -88,6 +95,17 @@
         android:layout_marginTop="20dp"
         tools:context="org.tensorflow.demo.CameraActivity" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/icn_action_save"
+        android:layout_below="@id/textView"
+        android:layout_alignParentRight="true"
+        android:id="@+id/btn_save"
+        android:layout_marginTop="140dp"
+        android:layout_marginRight="10dp"
+        app:backgroundTint="#E91E63"/>
+
     <LinearLayout
         android:id="@+id/feature_bar"
         android:layout_width="match_parent"
@@ -120,14 +138,6 @@
             android:layout_height="40dp"
             android:layout_gravity="right"
             android:background="@drawable/icn_action_tts" />
-
-        <ImageButton
-            android:id="@+id/btn_save"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="right"
-            android:background="@drawable/icn_action_save" />
-
 
     </LinearLayout>
 

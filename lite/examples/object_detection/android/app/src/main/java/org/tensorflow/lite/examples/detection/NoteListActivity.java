@@ -28,4 +28,10 @@ public class NoteListActivity extends AppCompatActivity {
                     .commitAllowingStateLoss();
         }
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
+    }
 }

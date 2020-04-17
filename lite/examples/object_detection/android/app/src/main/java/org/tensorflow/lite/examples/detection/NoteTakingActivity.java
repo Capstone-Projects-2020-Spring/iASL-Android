@@ -36,6 +36,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -113,7 +114,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     FirebaseUser firebaseUser;
     DatabaseReference reference;
-    ImageButton btn_camera, btn_notelist, btn_save, btn_delete;
+    ImageButton btn_camera, btn_notelist, btn_delete, btn_add_new;
+    FloatingActionButton btn_save;
 
     FrameLayout CameraContainer;
 
@@ -172,7 +174,22 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         btn_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveCurrentNote();
+                if (shouldSave()) {
+                    saveCurrentNote();
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "Note Title Missing", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        btn_add_new = findViewById(R.id.btn_add_new);
+        btn_add_new.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (shouldSave()) {
+                    Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -182,11 +199,12 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             public void onClick(View view) {
                 if (shouldDelete()) {
                     deleteCurrentNote();
+                    Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "Note is blank!", Toast.LENGTH_SHORT).show();
                 }
-                Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
-                startActivity(intent);
-                finish();
-
             }
         });
 
@@ -571,7 +589,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             } else {
                 noteEditText.append(text);
             }
-            //TODO Try to append letter instead of a while note.
             noteEditText.setSelection(noteEditText.getText().toString().length());
         }
     }
@@ -586,18 +603,20 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     private boolean shouldSave(){
-        if (noteBeforeSave.equals(noteEditText.getText().toString())){
-            return false;
-        } else {
+        if (!noteTitleEditText.getText().toString().equals("")){
             return true;
+        } else {
+            return false;
         }
     }
 
     private boolean shouldDelete() {
-        if (noteTitleEditText.getText().toString().equals("")) {
-            return false;
-        } else {
+        //Should delete when something is written
+        if (!noteTitleEditText.getText().toString().equals("") || !noteEditText.getText().toString().equals("")){
             return true;
+        } else {
+            return false;
         }
     }
+
 }
