@@ -1,5 +1,6 @@
 package org.tensorflow.lite.examples.detection;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,6 +24,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
@@ -86,6 +96,8 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     private TextToSpeech textToSpeech;
 
+    FirebaseUser firebaseUser;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,6 +120,24 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                 String toSpeak = textView.getText().toString();
                 Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
                 textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+            }
+        });
+
+        findViewById(R.id.saveButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                String[] msgArr = textView.getText().toString().split("\n", 2);
+                if(!msgArr[0].equals("")){
+                    sendNote(firebaseUser.getUid(), msgArr[0], msgArr[1]);
+                }
+                textView.setText("");
+            }
+        });
+
+        findViewById(R.id.notesButton).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                startActivity(new Intent(NoteTakingActivity.this, NoteBrowsingActivity.class));
             }
         });
 
@@ -146,6 +176,35 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         preprocessBuffer.put("nothing",0);
         preprocessBuffer.put("space",0);
 
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+    }
+
+    private void sendNote(String owner, String title, String message){
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("ownerId", owner);
+        hashMap.put("title", title);
+        hashMap.put("text", message);
+        hashMap.put("timestamp", System.currentTimeMillis());
+        reference = reference.child("notes");
+        String note_id = reference.push().getKey();
+        hashMap.put("id", note_id);
+
+        reference.child(note_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put(note_id, 1);
+                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
+                reference1.child(owner).updateChildren(hashMap);
+            }
+        });
+    }
+
+    private void readNote(final String myid, final String userid){
+        Log.d("test", "readNote is invoked");
 
     }
 
