@@ -4,7 +4,10 @@ xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
-tools:context=".LoginActivity">
+    android:gravity="center_vertical"
+tools:context=".LoginActivity"
+   android:background="#E91E63">
+
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -17,8 +20,9 @@ tools:context=".LoginActivity">
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
         android:text="Login"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"/>
 
     <com.rengwuxian.materialedittext.MaterialEditText
         android:id="@+id/email"
@@ -27,7 +31,9 @@ tools:context=".LoginActivity">
         android:layout_marginTop="10dp"
         android:fontFamily="monospace"
         android:hint="Email"
-        app:met_floatingLabel="normal" />
+        app:met_floatingLabel="normal"
+        app:met_textColor="#FFFFFF"
+        app:met_textColorHint="#FFFFFF"/>
 
     <com.rengwuxian.materialedittext.MaterialEditText
         android:id="@+id/password"
@@ -35,20 +41,23 @@ tools:context=".LoginActivity">
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:fontFamily="monospace"
-        android:hint="Passworld"
+        android:hint="Password"
         android:inputType="textPassword"
-        app:met_floatingLabel="normal" />
+        app:met_floatingLabel="normal"
+        app:met_textColor="#FFFFFF"
+        app:met_textColorHint="#FFFFFF"/>
 
     <Button
         android:id="@+id/btn_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="@color/tfe_color_accent"
+        android:background="@drawable/rounded"
         android:fontFamily="monospace"
-        android:padding="10dp"
         android:text="Login"
-        android:textColor="#fff" />
+        android:textSize="15sp"
+        android:textColor="#E91E63"
+        android:textStyle="bold"/>
 
 </LinearLayout>
 

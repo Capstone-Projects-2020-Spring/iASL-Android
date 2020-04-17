@@ -1,5 +1,6 @@
 package org.tensorflow.lite.examples.detection;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -13,7 +14,9 @@ import android.media.ThumbnailUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.os.TestLooperManager;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Size;
@@ -22,27 +25,37 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.model.Note;
+import org.tensorflow.lite.examples.detection.model.User;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
-import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +72,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labels.txt";
     private static final NoteTakingActivity.DetectorMode MODE = NoteTakingActivity.DetectorMode.TF_OD_API;
     // Minimum detection confidence to track a detection.
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.85f;
     private static final boolean MAINTAIN_ASPECT = false;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(200, 200);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -83,27 +96,162 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     String lastLetter, lastNonLetter;
 
     private long timestamp = 0;
+    private boolean saved = false;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
 
-    private MultiBoxTracker tracker;
-
     private BorderedText borderedText;
-    private EditText textView;
+    private EditText noteEditText, noteTitleEditText;
 
-    private String currentNote = "";
+    private String currentNote = "", noteTitle="", currentNoteId="", noteBeforeSave="", titleBeforeSave="";
 
     private TextToSpeech textToSpeech;
 
+    TextView username;
+
+    boolean use_camera_prediction = true, use_speech_to_text = false;
+
     FirebaseUser firebaseUser;
+    DatabaseReference reference;
+    ImageButton btn_camera, btn_notelist, btn_delete, btn_add_new;
+    FloatingActionButton btn_save;
+
+    FrameLayout CameraContainer;
+
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.note_taking_activity);
 
-        textView = findViewById(R.id.textView);
+        noteEditText = findViewById(R.id.textView);
+        noteTitleEditText = findViewById(R.id.note_title);
+
+        Intent intent = getIntent();
+        if (intent.getExtras() != null){
+            noteTitle = intent.getStringExtra("title");
+            currentNote = intent.getStringExtra("text");
+            currentNoteId = intent.getStringExtra("noteId");
+            noteTitleEditText.setText(noteTitle);
+            noteEditText.setText(currentNote);
+        } else {
+            noteTitle ="";
+            currentNote="";
+            currentNoteId="";
+        }
+
+        noteEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cameraPredictionDisable();
+            }
+        });
+
+        noteEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                saved = false;
+            }
+        });
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("");
+
+        CameraContainer = findViewById(R.id.container);
+
+        btn_save = findViewById(R.id.btn_save);
+        btn_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (shouldSave()) {
+                    saveCurrentNote();
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "Note Title Missing", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        btn_add_new = findViewById(R.id.btn_add_new);
+        btn_add_new.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (shouldSave()) {
+                    Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        btn_delete = findViewById(R.id.btn_delete);
+        btn_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (shouldDelete()) {
+                    deleteCurrentNote();
+                    Intent intent = new Intent(NoteTakingActivity.this, NoteTakingActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "Note is blank!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        btn_camera = findViewById(R.id.btn_camera);
+        btn_camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (CameraContainer.getVisibility() == View.INVISIBLE){
+                    CameraContainer.setVisibility(View.VISIBLE);
+                    btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
+                    use_camera_prediction = true;
+                    use_speech_to_text = false;
+                } else {
+                    cameraPredictionDisable();
+                }
+            }
+        });
+
+        btn_notelist = findViewById(R.id.note_list);
+        btn_notelist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(NoteTakingActivity.this, NoteListActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        username = findViewById(R.id.username);
+
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        reference = FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid());
+
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                username.setText(user.getName());
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
@@ -114,35 +262,33 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             }
         });
 
-        findViewById(R.id.tts).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_tts).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String toSpeak = textView.getText().toString();
+                String toSpeak = noteEditText.getText().toString();
                 Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null); //TODO TTS DOESN'T WORK AFTER STT
             }
         });
 
-        findViewById(R.id.saveButton).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_stt).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                String[] msgArr = textView.getText().toString().split("\n", 2);
-                if(!msgArr[0].equals("")){
-                    sendNote(firebaseUser.getUid(), msgArr[0], msgArr[1]);
+            public void onClick(View view) {
+                if (use_speech_to_text) {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now");
+                    try {
+                        startActivityForResult(intent, 100);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(NoteTakingActivity.this, "Sorry, this feature is not supported on your device", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(NoteTakingActivity.this, "You can't use this feature while the camera is on", Toast.LENGTH_SHORT).show();
                 }
-                textView.setText("");
             }
         });
-
-        findViewById(R.id.notesButton).setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                startActivity(new Intent(NoteTakingActivity.this, NoteBrowsingActivity.class));
-            }
-        });
-
-        Button backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(view -> finish());
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -176,36 +322,77 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         preprocessBuffer.put("nothing",0);
         preprocessBuffer.put("space",0);
 
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
     }
 
-    private void sendNote(String owner, String title, String message){
+    @Override
+    public synchronized void onResume() {
+        super.onResume();
+        cameraPredictionDisable();
+    }
 
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        HashMap<String, Object> hashMap = new HashMap<>();
-        hashMap.put("ownerId", owner);
-        hashMap.put("title", title);
-        hashMap.put("text", message);
-        hashMap.put("timestamp", System.currentTimeMillis());
-        reference = reference.child("notes");
-        String note_id = reference.push().getKey();
-        hashMap.put("id", note_id);
-
-        reference.child(note_id).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                HashMap<String, Object> hashMap = new HashMap<>();
-                hashMap.put(note_id, 1);
-                DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
-                reference1.child(owner).updateChildren(hashMap);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 100:{
+                if (resultCode == RESULT_OK && null != data){
+                    ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    noteEditText.append(result.get(0).toString());
+                }
+                break;
             }
-        });
+        }
     }
 
-    private void readNote(final String myid, final String userid){
-        Log.d("test", "readNote is invoked");
+    private void cameraPredictionDisable(){
+        CameraContainer.setVisibility(View.INVISIBLE);
+        btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
+        use_camera_prediction = false;
+        use_speech_to_text = true;
+        note.delete(0 , note.length());
+    }
 
+    private void deleteCurrentNote(){
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference noteRef = reference.child("notes/"+currentNoteId);
+        noteRef.setValue(null);
+        DatabaseReference userNoteRef = reference.child("user-notes/"+FirebaseAuth.getInstance().getCurrentUser().getUid()+'/'+currentNoteId);
+        userNoteRef.setValue(null);
+        Toast.makeText( NoteTakingActivity.this, "Note deleted!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void saveCurrentNote(){
+        if (!noteTitleEditText.getText().equals("")) {
+            //TODO Implement Note Saving to Firebase
+            DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+            reference = reference.child("notes");
+            if (currentNoteId == "") {
+                currentNoteId = reference.push().getKey();
+            }
+            HashMap<String, Object> hashMap = new HashMap<>();
+            hashMap.put("id", currentNoteId);
+            hashMap.put("ownerId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            hashMap.put("text", noteEditText.getText().toString());
+            hashMap.put("timestamp", System.currentTimeMillis());
+            hashMap.put("title", noteTitleEditText.getText().toString());
+            reference.child(currentNoteId).setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    HashMap<String, Object> hashMap = new HashMap<>();
+                    hashMap.put(currentNoteId, 1);
+                    DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("user-notes");
+                    reference1.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).updateChildren(hashMap);
+                    Toast.makeText(NoteTakingActivity.this, "Note saved!", Toast.LENGTH_SHORT).show();
+                    noteBeforeSave="";
+                    noteBeforeSave+=currentNote;
+                    titleBeforeSave="";
+                    titleBeforeSave+=noteTitle;
+                }
+            });
+        } else {
+            Toast.makeText(NoteTakingActivity.this, "Title is missing", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -215,8 +402,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                         TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, getResources().getDisplayMetrics());
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
-
-        tracker = new MultiBoxTracker(this);
 
         int cropSize = TF_OD_API_INPUT_SIZE;
 
@@ -261,18 +446,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         frameToCropTransform.invert(cropToFrameTransform);
 
         trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
-        trackingOverlay.addCallback(
-                new OverlayView.DrawCallback() {
-                    @Override
-                    public void drawCallback(final Canvas canvas) {
-                        tracker.draw(canvas);
-                        if (isDebug()) {
-                            tracker.drawDebug(canvas);
-                        }
-                    }
-                });
-
-        tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
     }
 
     @Override
@@ -327,18 +500,9 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                             }
                         }
 
-                        tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
-
-                        runOnUiThread(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                                    }
-                                });
                     }
                 });
     }
@@ -380,6 +544,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
 
+
     protected void showPrediction(String pred){
         if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
             if (pred.equals(lastLetter)) {
@@ -389,7 +554,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
                 recurCount = 0;
             }
 
-            if (recurCount > 3) {
+            if (recurCount > 2) {
                 appendText(lastLetter);
                 recurCount = 0;
             }
@@ -410,17 +575,24 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     }
 
     private void appendText(String text){
-        if (note.length() > 0 && text.equals("del")){
-            note.deleteCharAt(note.length()-1);
-        } else if (text.equals("space")){
-            note.append(" ");
-        } else if (text.equals("nothing")){
-            //Do nothing
-        } else {
-            note.append(text);
+        if (use_camera_prediction) {
+            if (text.equals("del")) {
+                if (text.length() > 0) {
+                    note.delete(0, note.length());
+                    note.append(noteEditText.getText());
+                    note.deleteCharAt(note.length()-1);
+                    noteEditText.setText(note);
+                }
+            } else if (text.equals("space")) {
+                noteEditText.append(" ");
+            } else if (text.equals("nothing")) {
+                //Do nothing
+                return;
+            } else {
+                noteEditText.append(text);
+            }
+            noteEditText.setSelection(noteEditText.getText().toString().length());
         }
-
-        textView.setText(note.toString());
     }
 
     @Override
@@ -431,4 +603,22 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         }
         super.onPause();
     }
+
+    private boolean shouldSave(){
+        if (!noteTitleEditText.getText().toString().equals("")){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean shouldDelete() {
+        //Should delete when something is written
+        if (!noteTitleEditText.getText().toString().equals("") || !noteEditText.getText().toString().equals("")){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

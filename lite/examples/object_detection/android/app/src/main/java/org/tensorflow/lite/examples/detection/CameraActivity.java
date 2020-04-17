@@ -21,6 +21,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -46,11 +47,15 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.auth.FirebaseAuth;
+
 import java.nio.ByteBuffer;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
@@ -81,12 +86,14 @@ public abstract class CameraActivity extends AppCompatActivity
   private LinearLayout bottomSheetLayout;
   private LinearLayout gestureLayout;
   private BottomSheetBehavior<LinearLayout> sheetBehavior;
+  private RelativeLayout relativeLayout;
 
-  protected TextView frameValueTextView, cropValueTextView;
+
+  //Visible Views
+  protected TextView PredictionTextView, ConfidenceTextView;
   protected ImageView bottomSheetArrowImageView;
-  private ImageView plusImageView, minusImageView;
-  private SwitchCompat apiSwitchCompat;
-  private TextView threadsTextView;
+  ImageButton noteButton, msgButton;
+  Button btn_logout;
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -95,9 +102,6 @@ public abstract class CameraActivity extends AppCompatActivity
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     setContentView(R.layout.tfe_od_activity_camera);
-    Toolbar toolbar = findViewById(R.id.toolbar);
-    setSupportActionBar(toolbar);
-    getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (hasPermission()) {
       setFragment();
@@ -105,14 +109,25 @@ public abstract class CameraActivity extends AppCompatActivity
       requestPermission();
     }
 
-    apiSwitchCompat = findViewById(R.id.api_info_switch);
     bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
     gestureLayout = findViewById(R.id.gesture_layout);
     sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
     bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+
+    relativeLayout = findViewById(R.id.relativeLayout2);
+
     //Set up buttons
-    Button noteButton = findViewById(R.id.noteButton);
-    Button msgButton = findViewById(R.id.msgButton);
+    noteButton = findViewById(R.id.noteButton);
+    msgButton = findViewById(R.id.msgButton);
+    btn_logout = findViewById(R.id.btn_logout);
+    btn_logout.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View view) {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(CameraActivity.this, StartActivity.class));
+        finish();
+      }
+    });
 
     noteButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -124,7 +139,7 @@ public abstract class CameraActivity extends AppCompatActivity
     msgButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View view) {
-        startActivity(new Intent(view.getContext(), StartActivity.class));
+        startActivity(new Intent(view.getContext(), MessagingActivity.class));
       }
     });
 
@@ -138,10 +153,8 @@ public abstract class CameraActivity extends AppCompatActivity
             } else {
               gestureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
-            //                int width = bottomSheetLayout.getMeasuredWidth();
-            int height = gestureLayout.getMeasuredHeight();
 
-            sheetBehavior.setPeekHeight(height);
+            sheetBehavior.setPeekHeight(300);
           }
         });
     sheetBehavior.setHideable(false);
@@ -156,10 +169,13 @@ public abstract class CameraActivity extends AppCompatActivity
               case BottomSheetBehavior.STATE_EXPANDED:
                 {
                   bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_down);
+                  relativeLayout.setBackgroundColor(Color.parseColor("#E91E63"));
+
                 }
                 break;
               case BottomSheetBehavior.STATE_COLLAPSED:
                 {
+                  relativeLayout.setBackgroundColor(Color.parseColor("#FFFFFF"));
                   bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
                 }
                 break;
@@ -175,23 +191,13 @@ public abstract class CameraActivity extends AppCompatActivity
           public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
         });
 
-    frameValueTextView = findViewById(R.id.frame_info);
-    cropValueTextView = findViewById(R.id.crop_info);
-
-    apiSwitchCompat.setOnCheckedChangeListener(this);
+      PredictionTextView = findViewById(R.id.prediction_frame);
+      ConfidenceTextView = findViewById(R.id.confidence_score_text_view);
   }
 
   protected int[] getRgbBytes() {
     imageConverter.run();
     return rgbBytes;
-  }
-
-  protected int getLuminanceStride() {
-    return yRowStride;
-  }
-
-  protected byte[] getLuminance() {
-    return yuvBytes[0];
   }
 
   /** Callback for android.hardware.Camera API */
@@ -317,6 +323,9 @@ public abstract class CameraActivity extends AppCompatActivity
     handlerThread = new HandlerThread("inference");
     handlerThread.start();
     handler = new Handler(handlerThread.getLooper());
+
+    noteButton.bringToFront();
+    msgButton.bringToFront();
   }
 
   @Override
@@ -510,16 +519,14 @@ public abstract class CameraActivity extends AppCompatActivity
   @Override
   public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
     setUseNNAPI(isChecked);
-    if (isChecked) apiSwitchCompat.setText("NNAPI");
-    else apiSwitchCompat.setText("TFLITE");
   }
 
   protected void showFrameInfo(String frameInfo) {
-    frameValueTextView.setText(frameInfo);
+      PredictionTextView.setText(frameInfo);
   }
 
-  protected void showCropInfo(String cropInfo) {
-    cropValueTextView.setText(cropInfo);
+  protected void showConfidence(String score) {
+    ConfidenceTextView.setText(score);
   }
 
   protected abstract void processImage();

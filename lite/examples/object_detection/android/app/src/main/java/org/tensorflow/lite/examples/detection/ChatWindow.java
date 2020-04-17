@@ -1,9 +1,11 @@
 package org.tensorflow.lite.examples.detection;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -17,14 +19,12 @@ import android.media.ImageReader;
 import android.media.ThumbnailUtils;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.SystemClock;
-import android.speech.tts.TextToSpeech;
+import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -36,7 +36,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -55,27 +54,26 @@ import org.tensorflow.lite.examples.detection.model.Chat;
 import org.tensorflow.lite.examples.detection.model.User;
 import org.tensorflow.lite.examples.detection.tflite.Classifier;
 import org.tensorflow.lite.examples.detection.tflite.TFLiteObjectDetectionAPIModel;
-import org.tensorflow.lite.examples.detection.tracking.MultiBoxTracker;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatWindow extends CameraActivity implements ImageReader.OnImageAvailableListener {
     TextView username;
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     private static final int PERMISSIONS_REQUEST = 1;
 
-    Boolean use_auto_prediction = true;
+    Boolean use_camera_prediction = true, use_speech_to_text = false;
     EditText txt_message;
 
     FirebaseUser firebaseUser;
     DatabaseReference reference;
 
-    ImageButton btn_send;
-    ImageButton btn_camera;
+    ImageButton btn_send, btn_camera, btn_stt;
     EditText text_send;
 
     MessageAdapter messageAdapter;
@@ -84,7 +82,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     RecyclerView recyclerView;
 
     Intent intent;
-    Classifier.Recognition label;
+    FrameLayout CameraContainer;
 
 
     private static final Logger LOGGER = new Logger();
@@ -124,8 +122,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
 
-    private MultiBoxTracker tracker;
-
     private BorderedText borderedText;
 
     @Override
@@ -145,8 +141,10 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         });
 
         txt_message = findViewById(R.id.text_send);
-
+        btn_stt = findViewById(R.id.btn_stt);
         btn_camera = findViewById(R.id.btn_camera);
+
+        CameraContainer = findViewById(R.id.container);
 
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
@@ -168,6 +166,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 if (!msg.equals("")){
                     sendMessage(firebaseUser.getUid(), userid, msg);
                 }
+                note.delete(0, note.length());
                 text_send.setText("");
             }
         });
@@ -175,17 +174,16 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         btn_camera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FrameLayout frameLayout = findViewById(R.id.container);
-                if (frameLayout.getVisibility() == View.INVISIBLE){
-                    frameLayout.setVisibility(View.VISIBLE);
-                    ImageButton btn_camera = findViewById(R.id.btn_camera);
+                if (CameraContainer.getVisibility() == View.INVISIBLE){
+                    CameraContainer.setVisibility(View.VISIBLE);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_off);
-                    use_auto_prediction = true;
+                    use_camera_prediction = true;
+                    use_speech_to_text = false;
                 } else {
-                    frameLayout.setVisibility(View.INVISIBLE);
-                    ImageButton btn_camera = findViewById(R.id.btn_camera);
+                    CameraContainer.setVisibility(View.INVISIBLE);
                     btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
-                    use_auto_prediction = false;
+                    use_camera_prediction = false;
+                    use_speech_to_text = true;
                 }
             }
         });
@@ -206,6 +204,49 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
             }
         });
+
+        btn_stt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (use_speech_to_text) {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Please speak now");
+                    try {
+                        startActivityForResult(intent, 100);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(ChatWindow.this, "Sorry, this feature is not supported on your device", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(ChatWindow.this, "You can't use this feature while the camera is on", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    @Override
+    public synchronized void onResume() {
+        super.onResume();
+        CameraContainer.setVisibility(View.INVISIBLE);
+        ImageButton btn_camera = findViewById(R.id.btn_camera);
+        btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
+        use_camera_prediction = false;
+        use_speech_to_text = true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case 100:{
+                if (resultCode == RESULT_OK && null != data){
+                    ArrayList result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    text_send.append(result.get(0).toString());
+                }
+                break;
+            }
+        }
     }
 
     private void sendMessage(String sender, String receiver, String message){
@@ -288,8 +329,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         borderedText = new BorderedText(textSizePx);
         borderedText.setTypeface(Typeface.MONOSPACE);
 
-        tracker = new MultiBoxTracker(this);
-
         int cropSize = TF_OD_API_INPUT_SIZE;
 
         try {
@@ -319,9 +358,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-        int dimension = getSquareCropDimensionForBitmap(rgbFrameBitmap);
         croppedBitmap = ThumbnailUtils.extractThumbnail(rgbFrameBitmap, cropSize, cropSize);
-        //croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
 
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
@@ -333,18 +370,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         frameToCropTransform.invert(cropToFrameTransform);
 
         trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
-        trackingOverlay.addCallback(
-                new OverlayView.DrawCallback() {
-                    @Override
-                    public void drawCallback(final Canvas canvas) {
-                        tracker.draw(canvas);
-                        if (isDebug()) {
-                            tracker.drawDebug(canvas);
-                        }
-                    }
-                });
-
-        tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
     }
 
     @Override
@@ -402,12 +427,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 canvas.drawRect(location, paint);
-
                                 showPrediction(result.getTitle());
                             }
                         }
-
-                        tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
 
                         computingDetection = false;
@@ -418,12 +440,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     @Override
     protected int getLayoutId() {
         return R.layout.tfe_od_camera_connection_fragment_tracking;
-    }
-
-    public int getSquareCropDimensionForBitmap(Bitmap bitmap)
-    {
-        //use the smallest dimension of the image to crop to
-        return Math.min(bitmap.getWidth(), bitmap.getHeight());
     }
 
     @Override
@@ -473,14 +489,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         return true;
     }
 
-    private boolean hasPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED;
-        } else {
-            return true;
-        }
-    }
-
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
@@ -515,7 +523,7 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
                 recurCountNonLetter = 0;
             }
 
-            if (recurCountNonLetter > 2){
+            if (recurCountNonLetter > 1){
                 appendText(lastNonLetter);
                 recurCountNonLetter = 0;
             }
@@ -524,16 +532,23 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
     }
 
     private void appendText(String text){
-        if (note.length() > 0 && text.equals("del")){
-            note.deleteCharAt(note.length()-1);
-        } else if (text.equals("space")){
-            note.append(" ");
-        } else if (text.equals("nothing")){
-            //Do nothing
-        } else {
-            note.append(text);
+        if (use_camera_prediction) {
+            if (text.equals("del")) {
+                if (text.length() > 0) {
+                    note.delete(0, note.length());
+                    note.append(text_send.getText());
+                    note.deleteCharAt(note.length()-1);
+                    text_send.setText(note);
+                }
+            } else if (text.equals("space")) {
+                text_send.append(" ");
+            } else if (text.equals("nothing")) {
+                //Do nothing
+            } else {
+                text_send.append(text);
+            }
+            //TODO Try to append letter instead of a while note.
+            text_send.setSelection(text_send.getText().toString().length());
         }
-
-        text_send.setText(note.toString());
     }
 }

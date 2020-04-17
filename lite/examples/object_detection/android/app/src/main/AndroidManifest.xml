@@ -16,9 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.ObjectDetection">
-        <activity android:name=".NoteBrowsingActivity"></activity>
+        <activity android:name=".NoteListActivity"></activity>
         <activity android:name=".ChatWindow" />
-        <activity android:name=".StartActivity" />
         <activity
             android:name=".LoginActivity"
             android:parentActivityName=".StartActivity" />
@@ -28,7 +27,7 @@
             android:parentActivityName=".StartActivity" />
         <activity android:name=".NoteTakingActivity" />
         <activity
-            android:name=".DetectorActivity"
+            android:name=".StartActivity"
             android:label="iASL"
             android:screenOrientation="fullSensor">
             <intent-filter>
@@ -37,6 +36,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DetectorActivity" />
     </application>
 
 </manifest>

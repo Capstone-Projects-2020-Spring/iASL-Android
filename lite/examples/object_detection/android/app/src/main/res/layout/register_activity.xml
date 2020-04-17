@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RegisterActivity">
+    tools:context=".RegisterActivity"
+    android:gravity="center_vertical"
+    android:background="#E91E63">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,8 +19,9 @@
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
             android:text="Create a new account"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"/>
 
         <com.rengwuxian.materialedittext.MaterialEditText
             android:id="@+id/username"
@@ -27,7 +30,9 @@
             android:layout_marginTop="10dp"
             android:fontFamily="monospace"
             android:hint="Username"
-            app:met_floatingLabel="normal" />
+            app:met_textColor="#FFFFFF"
+            app:met_floatingLabel="normal"
+            app:met_textColorHint="#FFFFFF"/>
 
         <com.rengwuxian.materialedittext.MaterialEditText
             android:id="@+id/email"
@@ -36,29 +41,34 @@
             android:layout_marginTop="10dp"
             android:fontFamily="monospace"
             android:hint="Email"
+            app:met_textColor="#FFFFFF"
             android:inputType="textEmailAddress"
-            app:met_floatingLabel="normal" />
+            app:met_floatingLabel="normal"
+            app:met_textColorHint="#FFFFFF"/>
 
         <com.rengwuxian.materialedittext.MaterialEditText
             android:id="@+id/password"
             android:layout_width="match_parent"
+            app:met_textColor="#FFFFFF"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:fontFamily="monospace"
-            android:hint="Passworld"
+            android:hint="Password"
             android:inputType="textPassword"
-            app:met_floatingLabel="normal" />
+            app:met_floatingLabel="normal"
+            app:met_textColorHint="#FFFFFF"/>
 
         <Button
             android:id="@+id/btn_register"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:background="@color/tfe_color_accent"
+            android:background="@drawable/rounded"
             android:fontFamily="monospace"
-            android:padding="10dp"
+            android:textSize="15sp"
             android:text="register"
-            android:textColor="#fff" />
+            android:textColor="#E91E63"
+            android:textStyle="bold"/>
 
     </LinearLayout>
         

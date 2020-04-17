@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/toolbar"
-            android:background="@color/tfe_color_primary_dark"
+            android:background="#E91E63"
             android:theme="@style/Widget.AppCompat.ActionBar">
 
             <TextView
@@ -25,7 +25,7 @@
                 android:layout_marginLeft="25dp"
                 android:fontFamily="monospace"
                 android:text="Username"
-                android:textColor="#fff"
+                android:textColor="#FFFFFF"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:layout_marginStart="25dp"/>
@@ -36,10 +36,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/tab_layout"
-            android:background="@color/tfe_color_primary_dark"
-            app:tabSelectedTextColor="#fff"
-            app:tabIndicator="@color/tfe_color_primary_dark"
-            app:tabTextColor="#fff"/>
+            android:background="#E91E63"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabTextColor="#FFFFFF"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
