@@ -47,8 +47,7 @@ import android.media.ThumbnailUtils;
 
 
 /**
- * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
- * objects.
+ * An activity that uses TensorFlow and Camera to give ASL predictions
  */
 public class DetectorActivity extends CameraActivity implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
@@ -135,7 +134,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     trackingOverlay = findViewById(R.id.tracking_overlay);
   }
-
+  /**
+   * Get the bitmap from the camera and then run prediction on the image.
+   * Prediction results are passed to a filter to decide whether the predictions
+   * should be printed out.
+   */
   @Override
   protected void processImage() {
     ++timestamp;
@@ -205,6 +208,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     return R.layout.tfe_od_camera_connection_fragment_tracking;
   }
 
+  /**
+   * Use the smallest dimension of the image to crop to a square bitmap
+   * @param bitmap image received from the camera
+   * @return the smallest dimension of the bitmap
+   */
   public int getSquareCropDimensionForBitmap(Bitmap bitmap)
   {
     //use the smallest dimension of the image to crop to
@@ -221,8 +229,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   }
 
-  // Which detection model to use: by default uses Tensorflow Object Detection API frozen
-  // checkpoints.
+  /**
+   * Which detection model to use: by default uses Tensorflow Object Detection API frozen checkpoints.
+   */
   private enum DetectorMode {
     TF_OD_API
   }
@@ -231,7 +240,10 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   protected void setUseNNAPI(final boolean isChecked) {
     runInBackground(() -> detector.setUseNNAPI(isChecked));
   }
-
+  /**
+   * Set number of prediction threads
+   * @param numThreads number of threads
+   */
   @Override
   protected void setNumThreads(final int numThreads) {
     runInBackground(() -> detector.setNumThreads(numThreads));

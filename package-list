@@ -1,0 +1,7 @@
+org.tensorflow.lite.examples.detection
+org.tensorflow.lite.examples.detection.Adapter
+org.tensorflow.lite.examples.detection.customview
+org.tensorflow.lite.examples.detection.env
+org.tensorflow.lite.examples.detection.fragment
+org.tensorflow.lite.examples.detection.model
+org.tensorflow.lite.examples.detection.tflite

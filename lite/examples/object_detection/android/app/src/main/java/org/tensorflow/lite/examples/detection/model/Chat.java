@@ -1,5 +1,9 @@
 package org.tensorflow.lite.examples.detection.model;
 
+
+/**
+ * This class is a representation for a chat object, which has a senderId, a receiverId, a text, and a timestamp
+ */
 public class Chat {
     private String senderId;
     private String receiverId;

@@ -17,6 +17,9 @@ public class StartActivity extends AppCompatActivity {
 
     FirebaseUser firebaseUser;
 
+    /**
+     * Find the most recently login user and then start the main activity
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -31,6 +34,10 @@ public class StartActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Create Views that allow user to Register or Login
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

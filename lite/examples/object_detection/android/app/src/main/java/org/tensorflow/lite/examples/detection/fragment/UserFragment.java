@@ -27,12 +27,22 @@ import org.tensorflow.lite.examples.detection.model.User;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A fragment that display a list of users that is fetched from Firebase Database
+ */
 public class UserFragment extends Fragment {
     private RecyclerView recyclerView;
     private UserAdapter userAdapter;
     private List<User> mUsers;
 
 
+    /**
+     * Creates Views
+     * @param inflater inflater that transform xml to java code
+     * @param container the container that contains the user fragment
+     * @param savedInstanceState
+     * @return a view/fragment to the parent's thread/caller's thread
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -49,6 +59,9 @@ public class UserFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Connect to Firebase Database and create a list of user object
+     */
     private void readUsers(){
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference("users");

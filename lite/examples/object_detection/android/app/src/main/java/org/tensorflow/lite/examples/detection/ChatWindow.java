@@ -61,14 +61,24 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-
+/**
+ * ChatWindow is a class that allows users to chat with another user
+ * using a keyboard or the camera prediction feature. User can send text
+ * messages to the other user via Firebase Database.
+ * <p>
+ *     There are several features that make the messaging experience
+ *     much more easier and versatile, including speech-to-text
+ *     that is powered by Google.
+ * </p>
+ *
+ * @author Viet H. Pham
+ */
 public class ChatWindow extends CameraActivity implements ImageReader.OnImageAvailableListener {
     TextView username;
     private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
     private static final int PERMISSIONS_REQUEST = 1;
 
     Boolean use_camera_prediction = true, use_speech_to_text = false;
-    EditText txt_message;
 
     FirebaseUser firebaseUser;
     DatabaseReference reference;
@@ -140,7 +150,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             }
         });
 
-        txt_message = findViewById(R.id.text_send);
         btn_stt = findViewById(R.id.btn_stt);
         btn_camera = findViewById(R.id.btn_camera);
 
@@ -224,17 +233,35 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             }
         });
     }
-
+    /**
+     * Turn off Camera Prediction Feature when user first open Activity.
+     * This helps to avoid accidental text appends right after launching.
+     */
     @Override
     public synchronized void onResume() {
         super.onResume();
+        cameraPredictionDisable();
+    }
+
+    /**
+     * Set the Camera View to invisible and stop appending texts
+     * to the EditTextView.
+     */
+    private void cameraPredictionDisable(){
         CameraContainer.setVisibility(View.INVISIBLE);
-        ImageButton btn_camera = findViewById(R.id.btn_camera);
         btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
         use_camera_prediction = false;
         use_speech_to_text = true;
+        note.delete(0 , note.length());
     }
-
+    /**
+     * A callback function after a request to Speech-To-Text service with code 100.
+     *
+     *
+     * @param requestCode A unique code for the requested activity
+     * @param resultCode A result for the requested activity
+     * @param data Data that the requested Activity returns
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -249,6 +276,12 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         }
     }
 
+    /**
+     * Send the message to the Firebase Database to store
+     * @param sender the user's UID
+     * @param receiver the recipient's UID
+     * @param message the message
+     */
     private void sendMessage(String sender, String receiver, String message){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         HashMap<String, Object> hashMap = new HashMap<>();
@@ -270,6 +303,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         });
     }
 
+    /**
+     * Read messages from Firebase and display them to the user
+     * @param myid the user's UID
+     * @param userid the recipient's uid
+     */
     private void readMessage(final String myid, final String userid){
         Log.d("test", "readMessage is invoked");
         mChats = new ArrayList<>();
@@ -371,7 +409,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
         trackingOverlay = findViewById(R.id.tracking_overlay);
     }
-
+    /**
+     * Get the bitmap from the camera and then run prediction on the image.
+     * Prediction results are passed to a filter to decide whether the predictions
+     * should be printed out.
+     */
     @Override
     protected void processImage() {
         ++timestamp;
@@ -452,8 +494,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     }
 
-    // Which detection model to use: by default uses Tensorflow Object Detection API frozen
-    // checkpoints.
+    /**
+     * Which detection model to use: by default uses Tensorflow Object Detection API frozen checkpoints.
+     */
     private enum DetectorMode {
         TF_OD_API
     }
@@ -463,11 +506,21 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         runInBackground(() -> detector.setUseNNAPI(isChecked));
     }
 
+    /**
+     * Set number of prediction threads
+     * @param numThreads number of threads
+     */
     @Override
     protected void setNumThreads(final int numThreads) {
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
 
+    /**
+     * A callback after the user allow/deny the permission request
+     * @param requestCode the request code for a specific permission
+     * @param permissions a list of permissions
+     * @param grantResults the result of the requests
+     */
     @Override
     public void onRequestPermissionsResult(
             final int requestCode, final String[] permissions, final int[] grantResults) {
@@ -480,6 +533,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         }
     }
 
+    /**
+     * Check the result of the permission requests
+     * @param grantResults an int array that holds request results
+     * @return true if permission is granted and false otherwise
+     */
     private static boolean allPermissionsGranted(final int[] grantResults) {
         for (int result : grantResults) {
             if (result != PackageManager.PERMISSION_GRANTED) {
@@ -489,6 +547,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         return true;
     }
 
+    /**
+     * Request user the permission to use the camera
+     */
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
@@ -501,7 +562,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             requestPermissions(new String[] {PERMISSION_CAMERA}, PERMISSIONS_REQUEST);
         }
     }
-
+    /**
+     * This function acts as a filter. If the prediction continuously
+     * repeats a specific time, accept the prediction
+     * @param pred A word, a letter, or an action
+     */
     protected void showPrediction(String pred){
         if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
             if (pred.equals(lastLetter)) {
@@ -530,7 +595,11 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
         }
 
     }
-
+    /**
+     * Check if user wants to use the Camera Prediciton feature. If yes,
+     * append the text to the EditText View or perform an according action.
+     * @param text the prediction text or action
+     */
     private void appendText(String text){
         if (use_camera_prediction) {
             if (text.equals("del")) {
@@ -547,7 +616,6 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
             } else {
                 text_send.append(text);
             }
-            //TODO Try to append letter instead of a while note.
             text_send.setSelection(text_send.getText().toString().length());
         }
     }

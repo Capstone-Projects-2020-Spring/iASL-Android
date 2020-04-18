@@ -17,6 +17,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.rengwuxian.materialedittext.MaterialEditText;
 
+/**
+ * This class allows users to login to the Firebase to use its resources, including
+ * messaging and note-taking features.
+ */
 public class LoginActivity extends AppCompatActivity {
 
     MaterialEditText email, password;
@@ -25,6 +29,10 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference reference;
 
+    /**
+     * Creates Views for users to interact for login
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

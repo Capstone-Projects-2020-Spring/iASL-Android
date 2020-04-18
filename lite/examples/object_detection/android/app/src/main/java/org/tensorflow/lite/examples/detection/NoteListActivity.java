@@ -7,6 +7,11 @@ import android.widget.FrameLayout;
 
 import org.tensorflow.lite.examples.detection.fragment.NoteListFragment;
 
+
+/**
+ * This activity shows a list of notes that belong to the user. This activity
+ * uses notelist fragment.
+ */
 public class NoteListActivity extends AppCompatActivity {
 
     private NoteListFragment noteListFragment;
@@ -29,6 +34,9 @@ public class NoteListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Remove the activity from the stack
+     */
     @Override
     protected void onStop() {
         super.onStop();

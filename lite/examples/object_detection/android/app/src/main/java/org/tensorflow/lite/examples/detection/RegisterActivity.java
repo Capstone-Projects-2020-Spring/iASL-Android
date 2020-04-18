@@ -25,14 +25,20 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.HashMap;
 
+/**
+ * This activity use Google Firebase to register user to the Firebase server.
+ */
 public class RegisterActivity extends AppCompatActivity {
 
     MaterialEditText username, email, password;
     Button btn_register;
-
     private FirebaseAuth mAuth;
     private DatabaseReference reference;
 
+    /**
+     * Set up Views
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +70,14 @@ public class RegisterActivity extends AppCompatActivity {
 
     }
 
+
+    /**
+     * Send the information to the Firebase and register user.
+     *
+     * @param username The unique display name for the user
+     * @param email The email that associates with the user
+     * @param password The associating password for the email
+     */
     private void register(String username, String email, String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {

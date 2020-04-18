@@ -1,5 +1,8 @@
 package org.tensorflow.lite.examples.detection.model;
 
+/**
+ * This class represents a note object, which has an id, uid of its owner, content, a timestamp, and a title
+ */
 public class Note {
 
     private String id;

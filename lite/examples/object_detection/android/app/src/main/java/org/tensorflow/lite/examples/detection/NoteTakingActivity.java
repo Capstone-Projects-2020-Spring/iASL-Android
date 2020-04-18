@@ -61,6 +61,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * NoteTakingActivity is a class that allows users to take note
+ * using a keyboard or the camera prediction feature. User can save
+ * the note to the Firebase Database that is associated with the user's
+ * account. User can also delete notes.
+ * <p>
+ *     There are several features that make the note taking experience
+ *     much more easier and versatile, including speech-to-text and
+ *     text-to-speech that are powered by Google.
+ * </p>
+ *
+ * @author Viet H. Pham
+ */
+
 public class NoteTakingActivity extends CameraActivity implements ImageReader.OnImageAvailableListener {
 
     private static final Logger LOGGER = new Logger();
@@ -89,7 +103,6 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     private boolean computingDetection = false;
 
-    private HashMap<String, Integer> preprocessBuffer = new HashMap<String, Integer>();
     StringBuilder note = new StringBuilder();
     int recurCount = 0;
     int recurCountNonLetter = 0;
@@ -120,7 +133,10 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
     FrameLayout CameraContainer;
 
 
-
+    /**
+     * Create Views
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -291,46 +307,26 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         });
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        preprocessBuffer.put("A",0);
-        preprocessBuffer.put("B",0);
-        preprocessBuffer.put("C",0);
-        preprocessBuffer.put("D",0);
-        preprocessBuffer.put("E",0);
-        preprocessBuffer.put("F",0);
-        preprocessBuffer.put("G",0);
-        preprocessBuffer.put("H",0);
-        preprocessBuffer.put("I",0);
-        preprocessBuffer.put("J",0);
-        preprocessBuffer.put("K",0);
-        preprocessBuffer.put("L",0);
-        preprocessBuffer.put("M",0);
-        preprocessBuffer.put("N",0);
-        preprocessBuffer.put("O",0);
-        preprocessBuffer.put("P",0);
-        preprocessBuffer.put("Q",0);
-        preprocessBuffer.put("R",0);
-        preprocessBuffer.put("S",0);
-        preprocessBuffer.put("T",0);
-        preprocessBuffer.put("U",0);
-        preprocessBuffer.put("V",0);
-        preprocessBuffer.put("W",0);
-        preprocessBuffer.put("X",0);
-        preprocessBuffer.put("Y",0);
-        preprocessBuffer.put("Z",0);
-        preprocessBuffer.put("del",0);
-        preprocessBuffer.put("nothing",0);
-        preprocessBuffer.put("space",0);
-
-
     }
 
+    /**
+     * Turn off Camera Prediction Feature when user first open Activity.
+     * This helps to avoid accidental text appends right after launching.
+     */
     @Override
     public synchronized void onResume() {
         super.onResume();
         cameraPredictionDisable();
     }
 
+    /**
+     * A callback function after a request to Speech-To-Text service with code 100.
+     *
+     *
+     * @param requestCode A unique code for the requested activity
+     * @param resultCode A result for the requested activity
+     * @param data Data that the requested Activity returns
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -345,6 +341,10 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         }
     }
 
+    /**
+     * Set the Camera View to invisible and stop appending texts
+     * to the EditTextView.
+     */
     private void cameraPredictionDisable(){
         CameraContainer.setVisibility(View.INVISIBLE);
         btn_camera.setBackgroundResource(R.drawable.ic_cam_on);
@@ -353,6 +353,9 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         note.delete(0 , note.length());
     }
 
+    /**
+     * Delete the current note from Firebase Database
+     */
     private void deleteCurrentNote(){
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         DatabaseReference noteRef = reference.child("notes/"+currentNoteId);
@@ -394,6 +397,7 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
             Toast.makeText(NoteTakingActivity.this, "Title is missing", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     public void onPreviewSizeChosen(final Size size, final int rotation) {
@@ -448,6 +452,11 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         trackingOverlay = findViewById(R.id.tracking_overlay);
     }
 
+    /**
+     * Get the bitmap from the camera and then run prediction on the image.
+     * Prediction results are passed to a filter to decide whether the predictions
+     * should be printed out.
+     */
     @Override
     protected void processImage() {
         ++timestamp;
@@ -512,9 +521,13 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         return R.layout.tfe_od_camera_connection_fragment_tracking;
     }
 
+    /**
+     * Use the smallest dimension of the image to crop to a square bitmap
+     * @param bitmap image received from the camera
+     * @return the smallest dimension of the bitmap
+     */
     public int getSquareCropDimensionForBitmap(Bitmap bitmap)
     {
-        //use the smallest dimension of the image to crop to
         return Math.min(bitmap.getWidth(), bitmap.getHeight());
     }
 
@@ -528,8 +541,9 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     }
 
-    // Which detection model to use: by default uses Tensorflow Object Detection API frozen
-    // checkpoints.
+    /**
+     * Which detection model to use: by default uses Tensorflow Object Detection API frozen checkpoints.
+     */
     private enum DetectorMode {
         TF_OD_API
     }
@@ -539,12 +553,21 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         runInBackground(() -> detector.setUseNNAPI(isChecked));
     }
 
+    /**
+     * Set number of prediction threads
+     * @param numThreads number of threads
+     */
     @Override
     protected void setNumThreads(final int numThreads) {
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
 
 
+    /**
+     * This function acts as a filter. If the prediction continuously
+     * repeats a specific time, accept the prediction
+     * @param pred A word, a letter, or an action
+     */
     protected void showPrediction(String pred){
         if (!pred.equals("del") && !pred.equals("space") && !pred.equals("nothing")) {
             if (pred.equals(lastLetter)) {
@@ -574,6 +597,11 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
 
     }
 
+    /**
+     * Check if user wants to use the Camera Prediciton feature. If yes,
+     * append the text to the EditText View or perform an according action.
+     * @param text the prediction text or action
+     */
     private void appendText(String text){
         if (use_camera_prediction) {
             if (text.equals("del")) {
@@ -595,6 +623,10 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         }
     }
 
+
+    /**
+     * Stop Text-To-Speech service when activity is on paused
+     */
     @Override
     public synchronized void onPause() {
         if(textToSpeech !=null){
@@ -604,10 +636,20 @@ public class NoteTakingActivity extends CameraActivity implements ImageReader.On
         super.onPause();
     }
 
+    /**
+     * Check if the activity should save the current note when the user press
+     * save button.
+     * @return true or false
+     */
     private boolean shouldSave(){
         return !noteTitleEditText.getText().toString().equals("");
     }
 
+    /**
+     * Check if the activity should delete the current note when the user press
+     * delete button.
+     * @return true or false
+     */
     private boolean shouldDelete() {
         //Should delete when something is written
         return !noteTitleEditText.getText().toString().equals("") || !noteEditText.getText().toString().equals("");

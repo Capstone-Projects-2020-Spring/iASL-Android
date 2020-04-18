@@ -1,5 +1,8 @@
 package org.tensorflow.lite.examples.detection.model;
 
+/**
+ * This class represents a user instance, which has an uid, an username, and an email.
+ */
 public class User {
     private String id;
     private String name;

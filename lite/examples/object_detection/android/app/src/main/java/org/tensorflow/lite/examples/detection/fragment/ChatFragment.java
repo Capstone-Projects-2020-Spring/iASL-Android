@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A fragment that display a list of user, whom the current user has received or sent message from
+ * to, that is fetched from Firebase Database
+ */
 public class ChatFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -41,6 +45,13 @@ public class ChatFragment extends Fragment {
     DatabaseReference databaseReference;
     private HashMap<String, Integer> userList;
 
+    /**
+     * Creates Views
+     * @param inflater inflater that transform xml to java code
+     * @param container the container that contains the chat fragment
+     * @param savedInstanceState
+     * @return a view/fragment to the parent's thread/caller's thread
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -82,6 +93,10 @@ public class ChatFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Get a list of user objects whom the current user has been in contact with
+     * @param userList a list of users' UID that the current user has been in contact with
+     */
     private void getUser(HashMap<String, Integer> userList){
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users");
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
