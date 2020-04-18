@@ -311,6 +311,7 @@ public abstract class CameraActivity extends AppCompatActivity
     Trace.endSection();
   }
 
+  ///onStart method; no parameters
   @Override
   public synchronized void onStart() {
     LOGGER.d("onStart " + this);
