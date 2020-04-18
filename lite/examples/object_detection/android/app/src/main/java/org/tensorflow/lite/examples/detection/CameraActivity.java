@@ -95,6 +95,8 @@ public abstract class CameraActivity extends AppCompatActivity
   ImageButton noteButton, msgButton;
   Button btn_logout;
 
+  ///onCreate method
+  ///Takes "savedInstanceState" bundle
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
     LOGGER.d("onCreate " + this);
