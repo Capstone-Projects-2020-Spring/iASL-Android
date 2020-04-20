@@ -124,6 +124,9 @@ public class ChatWindow extends CameraActivity implements ImageReader.OnImageAva
 
     private BorderedText borderedText;
 
+    ///onCreate method
+    ///Takes Bundle "savedInstanceState"
+    ///Called when needed by Android system
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(null);
