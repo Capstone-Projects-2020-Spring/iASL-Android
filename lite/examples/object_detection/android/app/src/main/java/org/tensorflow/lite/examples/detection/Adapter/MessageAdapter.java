@@ -32,11 +32,15 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
 
     FirebaseUser firebaseUser;
 
+    ///Constructor
+    ///Takes a context and a list of Chats
     public MessageAdapter(Context mContext, List<Chat> mChats){
         this.mChats = mChats;
         this.mContext = mContext;
     }
 
+    ///onCreateViewHolder
+    ///Takes a ViewGroup and and int that represents the type of view
     @NonNull
     @Override
     public MessageAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
