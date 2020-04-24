@@ -32,7 +32,9 @@ public class UserFragment extends Fragment {
     private UserAdapter userAdapter;
     private List<User> mUsers;
 
-
+    ///onCreateView method
+    ///Takes a LayoutInflater, a ViewGroup, and a Bundle
+    ///Called when needed by the Android system
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
