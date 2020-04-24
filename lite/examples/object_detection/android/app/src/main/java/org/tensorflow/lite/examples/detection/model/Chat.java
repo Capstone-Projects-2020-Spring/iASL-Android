@@ -13,10 +13,12 @@ public class Chat {
         this.timestamp = timestamp;
     }
 
+    ///Default constructor
     public Chat(){
 
     }
 
+    ///Returns the sender ID as a string
     public String getSenderId(){
         return senderId;
     }
@@ -25,6 +27,7 @@ public class Chat {
         this.senderId = senderId;
     }
 
+    ///Returns the receiver ID as a String
     public String getReceiverId(){
         return receiverId;
     }
@@ -33,6 +36,7 @@ public class Chat {
         this.receiverId = receiverId;
     }
 
+    ///Returns the text as a String
     public String getText(){
         return text;
     }
@@ -41,6 +45,7 @@ public class Chat {
         this.text = text;
     }
 
+    ///Returns the timestamp as a long
     public long getTimestamp(){
         return timestamp;
     }
