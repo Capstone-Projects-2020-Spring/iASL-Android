@@ -23,6 +23,7 @@ public class Chat {
         return senderId;
     }
 
+    ///Sets the sender ID to the specified string
     public void setSender(String senderId){
         this.senderId = senderId;
     }
@@ -32,6 +33,7 @@ public class Chat {
         return receiverId;
     }
 
+    ///Sets the receiver ID to the specified string
     public void setReceiverId(String receiverId){
         this.receiverId = receiverId;
     }
@@ -41,6 +43,7 @@ public class Chat {
         return text;
     }
 
+    ///Sets the text to the specified string
     public void setText(String text){
         this.text = text;
     }
@@ -50,6 +53,7 @@ public class Chat {
         return timestamp;
     }
 
+    ///Sets the timestamp to the specified long
     public void setTimestamp(long timestamp){
         this.timestamp = timestamp;
     }
