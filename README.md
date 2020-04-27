@@ -1,5 +1,7 @@
 # iASL-Android
 
+![iASLPoster](PosteriASL.001.jpeg)
+
 ## Overview
 This repository is for the iASL Android application. The app will use the Android device's front-facing camera to record the user performing ASL. It will then attempt to convert the ASL to text by using machine learning. The application will also support a speech-to-text feature.
 
