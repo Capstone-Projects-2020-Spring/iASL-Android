@@ -41,6 +41,9 @@ public class ChatFragment extends Fragment {
     DatabaseReference databaseReference;
     private HashMap<String, Integer> userList;
 
+    ///onCreateView Method
+    ///Takes a LayoutInflater, a ViewGroup, and a Bundle
+    ///Called when needed by the Android system
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -82,6 +85,10 @@ public class ChatFragment extends Fragment {
         return view;
     }
 
+    ///getUser method
+    ///Takes a HashMap of users
+    ///HashMap Key: String
+    ///HashMap Value: Integer
     private void getUser(HashMap<String, Integer> userList){
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users");
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
